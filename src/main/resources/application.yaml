@@ -1,20 +1,23 @@
-server:
-  port: 8080
-  servlet:
-    context-path: /identity
-
 spring:
+  application:
+    name: RowayShop
+
   datasource:
-    url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/identity_service}
-    driverClassName: "com.mysql.cj.jdbc.Driver"
-    password: ${DBMS_PASSWORD:root}
-    username: ${DBMS_USERNAME:root}
+    url: jdbc:postgresql://localhost:5432/roway
+    username: postgres
+    password: Vanbui262004@
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-#jwt:
-#  signerKey: "1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij"
-#  valid-duration: 3600 # in second
-#  refreshable-duration: 36000 # in seconds
+application:
+  security:
+    jwt:
+      secret-key: V0qfFwSH4RKrjG7F60Mm5NklyLTy2DsdDhRU03G2A1s=
+      expiration: 3600000 # Thời gian hết hạn (1 ngày)
