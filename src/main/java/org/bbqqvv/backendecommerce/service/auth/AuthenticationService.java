@@ -17,13 +17,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthenticationService {
 	
-    private UserService userService;
+    private final UserService userService;
 
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
     
-    private JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtil jwtTokenUtil;
     
     public AuthenticationService(UserService userService, 
     		PasswordEncoder passwordEncoder, 
