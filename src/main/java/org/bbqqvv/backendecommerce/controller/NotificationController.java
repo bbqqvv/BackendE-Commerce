@@ -1,6 +1,8 @@
 package org.bbqqvv.backendecommerce.controller;
 
 
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.bbqqvv.backendecommerce.entity.Notification;
 import org.bbqqvv.backendecommerce.service.NotificationService;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class NotificationController {
 	
     private NotificationService notificationService;

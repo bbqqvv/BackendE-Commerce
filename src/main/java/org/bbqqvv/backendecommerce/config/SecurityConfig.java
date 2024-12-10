@@ -31,7 +31,7 @@ public class SecurityConfig {
         this.jwtTokenUtil = jwtTokenUtil;
     }
 
-    // Định nghĩa các URL được phép truy cập mà không cần xác thực
+    // Định nghĩa các URL được phép truy cập mà không cần xác thựcTieens
     private static final String[] WHITE_LIST_URL = {
             "/auth/login",   // Đăng nhập
             "/auth/register" // Đăng ký
@@ -80,7 +80,7 @@ public class SecurityConfig {
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("http://localhost:3000"); // Cho phép tất cả origin, thay đổi nếu cần
+        config.addAllowedOrigin("http://localhost:3000");  // Cho phép cụ thể origin này
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);

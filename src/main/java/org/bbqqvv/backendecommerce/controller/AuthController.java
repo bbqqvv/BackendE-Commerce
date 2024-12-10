@@ -1,6 +1,8 @@
 package org.bbqqvv.backendecommerce.controller;
 
 
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.bbqqvv.backendecommerce.dto.JwtResponse;
 import org.bbqqvv.backendecommerce.dto.LoginUserDto;
 import org.bbqqvv.backendecommerce.dto.RegisterUserDto;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthController {
 	
     private AuthenticationService authenticationService;

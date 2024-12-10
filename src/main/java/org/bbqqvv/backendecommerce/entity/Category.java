@@ -15,17 +15,21 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(length = 200)
     private String name;
 
-    @Column(length = 200)
-    private String description;
+    @Column(nullable = false, unique = true, length = 50)
+    private String slug;
 
-    // Mỗi danh mục sẽ chứa nhiều sản phẩm
+    @Column(length = 200)
+    private String image; // Đường dẫn hình ảnh của danh mục
+
+    // Mối quan hệ với Product
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<Product> products;
 }

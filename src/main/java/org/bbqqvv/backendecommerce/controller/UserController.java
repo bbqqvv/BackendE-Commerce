@@ -1,6 +1,8 @@
 package org.bbqqvv.backendecommerce.controller;
 
 
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.StringUtils;
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
 import org.bbqqvv.backendecommerce.entity.User;
@@ -13,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
 	
 	private UserService userService;

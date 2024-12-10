@@ -1,6 +1,9 @@
 spring:
   application:
     name: RowayShop
+  servlet:
+    multipart:
+      enabled: true
 
   datasource:
     url: jdbc:postgresql://localhost:5432/roway
