@@ -31,31 +31,32 @@ public class SecurityConfig {
         this.jwtTokenUtil = jwtTokenUtil;
     }
 
-    // Định nghĩa các URL được phép truy cập mà không cần xác thựcTieens
+    // Các URL không yêu cầu xác thực
     private static final String[] WHITE_LIST_URL = {
-            "/auth/login",   // Đăng nhập
-            "/auth/register" // Đăng ký
+            "/auth/login",    // Đăng nhập
+            "/auth/register", // Đăng ký
+            "/api/categories/**",  // Các yêu cầu GET đối với danh mục không cần xác thực
+            "/api/products/**"  // Các yêu cầu GET đối với sản phẩm không cần xác thực
     };
 
-    // Định nghĩa các URL yêu cầu xác thực
+    // Các URL yêu cầu xác thực
     private static final String[] SECURED_URL_PATTERNS = {
-            "/api/**",
-            "/admin/**",
-            "/user/**"
+            "/api/categories/**",  // Tất cả các API danh mục yêu cầu xác thực cho các POST, PUT, DELETE
+            "/api/products/**"     // Tất cả các API sản phẩm yêu cầu xác thực cho các POST, PUT, DELETE
     };
 
     // Cấu hình SecurityFilterChain
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Cấu hình CORS
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF cho API REST
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(WHITE_LIST_URL).permitAll()  // Đăng nhập và đăng ký không cần xác thực
-                        .requestMatchers(SECURED_URL_PATTERNS).authenticated()  // Các yêu cầu còn lại phải xác thực
+                        .requestMatchers(WHITE_LIST_URL).permitAll() // Các yêu cầu GET không cần xác thực
+                        .requestMatchers(SECURED_URL_PATTERNS).authenticated() // Các phương thức POST, PUT, DELETE yêu cầu xác thực
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenUtil, customUserDetailsService),
-                        UsernamePasswordAuthenticationFilter.class); // Chỉ định thứ tự cho filter
+                        UsernamePasswordAuthenticationFilter.class); // Thêm filter JWT vào chuỗi bảo mật
 
         return http.build();
     }
@@ -80,7 +81,7 @@ public class SecurityConfig {
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:3000");  // Cho phép cụ thể origin này
+        config.addAllowedOrigin("http://localhost:3000");  // Cho phép origin này
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);

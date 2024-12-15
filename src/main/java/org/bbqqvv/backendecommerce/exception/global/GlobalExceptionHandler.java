@@ -2,9 +2,7 @@ package org.bbqqvv.backendecommerce.exception.global;
 
 import jakarta.persistence.EntityNotFoundException;
 
-import org.bbqqvv.backendecommerce.exception.CategoryNotFoundException;
-import org.bbqqvv.backendecommerce.exception.InsufficientFundsException;
-import org.bbqqvv.backendecommerce.exception.InvalidAmountException;
+import org.bbqqvv.backendecommerce.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -66,4 +64,28 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<Object> handleProductNotFoundException(ProductNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                Map.of(
+                        "timestamp", LocalDateTime.now(),
+                        "status", HttpStatus.NOT_FOUND.value(),
+                        "error", "Product Not Found",
+                        "message", ex.getMessage()
+                )
+        );
+    }
+
+    @ExceptionHandler(DuplicateProductCodeException.class)
+    public ResponseEntity<Object> handleDuplicateProductCodeException(DuplicateProductCodeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                Map.of(
+                        "timestamp", LocalDateTime.now(),
+                        "status", HttpStatus.CONFLICT.value(),
+                        "error", "Duplicate Product Code",
+                        "message", ex.getMessage()
+                )
+        );
+    }
+    
 }

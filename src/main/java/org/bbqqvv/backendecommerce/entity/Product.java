@@ -1,10 +1,7 @@
 package org.bbqqvv.backendecommerce.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,9 +11,11 @@ import java.util.List;
 @Table(name = "products")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,22 +23,42 @@ public class Product {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @Column(length = 200)
+    private String shortDescription;
+
     @Column(length = 500)
     private String description;
+
+    @Column(nullable = false, unique = true, length = 100)
+    private String productCode;
+
+    @Column(nullable = false)
+    private int stock;
 
     @Column(nullable = false)
     private BigDecimal price;
 
-    // Mỗi sản phẩm chỉ thuộc về một danh mục
+    @Column(nullable = true)
+    private boolean featured;
+
+    @Column(nullable = true)
+    private boolean sale;
+
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<ProductImage> images; // Mối quan hệ với hình ảnh
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
+    private ProductMainImage mainImage;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    private List<ProductVariant> variants; // Mối quan hệ với các biến thể sản phẩm
+    private List<ProductSecondaryImage> secondaryImages;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductDescriptionImage> descriptionImages;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<ProductVariant> variants;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();

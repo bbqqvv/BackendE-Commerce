@@ -1,81 +1,113 @@
 package org.bbqqvv.backendecommerce.service.impl;
 
-import io.jsonwebtoken.io.IOException;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.ImgBBConfig;
-import org.bbqqvv.backendecommerce.dto.CategoryDto;
+import org.bbqqvv.backendecommerce.dto.request.CategoryRequest;
+import org.bbqqvv.backendecommerce.dto.response.CategoryResponse;
 import org.bbqqvv.backendecommerce.entity.Category;
 import org.bbqqvv.backendecommerce.exception.CategoryNotFoundException;
+import org.bbqqvv.backendecommerce.mapper.CategoryMapper;
 import org.bbqqvv.backendecommerce.repository.CategoryRepository;
 import org.bbqqvv.backendecommerce.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException; // Sửa import đúng
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class CategoryServiceImpl implements CategoryService {
 
-    private final CategoryRepository categoryRepository;
-    private final ImgBBConfig imgBBConfig;
+    CategoryRepository categoryRepository;
+    CategoryMapper categoryMapper;
+    ImgBBConfig imgBBConfig;
 
     @Autowired
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ImgBBConfig imgBBConfig) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, ImgBBConfig imgBBConfig, CategoryMapper categoryMapper) {
         this.categoryRepository = categoryRepository;
         this.imgBBConfig = imgBBConfig;
+        this.categoryMapper = categoryMapper;
     }
 
     @Override
-    public Category createCategory(CategoryDto categoryDto) {
+    public CategoryResponse createCategory(CategoryRequest categoryRequest) {
         try {
-            Category category = new Category();
-            category.setSlug(categoryDto.getSlug());
-            category.setName(categoryDto.getName());
-            // Upload ảnh lên ImgBB và lưu URL
-            if (categoryDto.getImage() != null && !categoryDto.getImage().isEmpty()) {
-                String imageUrl = imgBBConfig.uploadImage(categoryDto.getImage());
-                category.setImage(imageUrl);
-            }
-            return categoryRepository.save(category);
+            // Xử lý upload ảnh
+            String imageUrl = handleImageUpload(categoryRequest.getImage());
+
+            // Chuyển từ CategoryRequest sang Category
+            Category category = categoryMapper.categoryRequestDTOToCategory(categoryRequest);
+            category.setImage(imageUrl); // Gán URL ảnh
+
+            // Lưu thực thể Category
+            Category savedCategory = categoryRepository.save(category);
+
+            // Chuyển sang DTO để trả về
+            return categoryMapper.categoryToCategoryResponseDTO(savedCategory);
         } catch (IOException e) {
-            throw new RuntimeException("Error uploading image", e);
+            log.error("Lỗi khi tải ảnh", e);
+            throw new RuntimeException("Không thể tải ảnh", e);
         }
     }
 
     @Override
-    public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("Category not found with ID: " + id));
+    public CategoryResponse getCategoryById(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục với ID: " + id));
+        return categoryMapper.categoryToCategoryResponseDTO(category);
     }
 
     @Override
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public List<CategoryResponse> getAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
+        return categories.stream()
+                .map(categoryMapper::categoryToCategoryResponseDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Category updateCategory(Long id, CategoryDto categoryDto) {
+    public CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest) {
         try {
             Category category = categoryRepository.findById(id)
-                    .orElseThrow(() -> new CategoryNotFoundException("Category not found with ID: " + id));
-            category.setSlug(categoryDto.getSlug());
-            category.setName(categoryDto.getName());
+                    .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục với ID: " + id));
 
-            // Upload ảnh mới (nếu có)
-            if (categoryDto.getImage() != null && !categoryDto.getImage().isEmpty()) {
-                String imageUrl = imgBBConfig.uploadImage(categoryDto.getImage());
-                category.setImage(imageUrl);
-            }
+            // Xử lý upload ảnh mới
+            String imageUrl = handleImageUpload(categoryRequest.getImage());
 
-            return categoryRepository.save(category);
+            // Cập nhật thông tin danh mục
+            category.setSlug(categoryRequest.getSlug());
+            category.setName(categoryRequest.getName());
+            category.setImage(imageUrl); // Gán URL ảnh mới
+
+            // Lưu lại danh mục đã cập nhật
+            Category updatedCategory = categoryRepository.save(category);
+
+            // Chuyển sang DTO để trả về
+            return categoryMapper.categoryToCategoryResponseDTO(updatedCategory);
         } catch (IOException e) {
-            throw new RuntimeException("Error uploading image", e);
+            log.error("Lỗi khi tải ảnh", e);
+            throw new RuntimeException("Không thể tải ảnh", e);
         }
     }
 
     @Override
     public boolean deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("Category not found with ID: " + id));
+                .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục với ID: " + id));
         categoryRepository.delete(category);
         return true;
+    }
+
+    private String handleImageUpload(MultipartFile image) throws IOException {
+        if (image != null && !image.isEmpty()) {
+            return imgBBConfig.uploadImage(image); // Thực hiện upload ảnh qua ImgBBConfig
+        }
+        return null; // Trả về null nếu không có ảnh
     }
 }

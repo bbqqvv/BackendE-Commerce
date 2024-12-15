@@ -1,5 +1,4 @@
 package org.bbqqvv.backendecommerce.entity;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductVariant {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,17 +29,17 @@ public class ProductVariant {
 
     @Column(nullable = false)
     private String color; // Màu sắc
-
-    @Column(nullable = false)
-    private int stock; // Số lượng tồn kho
-
     @Column(nullable = false)
     private BigDecimal price; // Giá của biến thể sản phẩm
-
     private LocalDateTime createdAt = LocalDateTime.now();
-
+    private LocalDateTime updatedAt = LocalDateTime.now();
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

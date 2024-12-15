@@ -1,17 +1,18 @@
 package org.bbqqvv.backendecommerce.service;
 
-
-
+import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
+import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.entity.User;
 
 import java.util.List;
 
 public interface UserService {
-	User createUser (User user);
-    User getUserById(Long id);
-    List<User> getAllUsers();
-    User updateUser (Long id, User user);
-    void deleteUser (Long id);
-	User getUserByUsername(String username);
+
+    UserResponse createUser(UserCreationRequest request);
+    UserResponse getUserById(Long id);
+    List<UserResponse> getAllUsers();
+    UserResponse updateUser(Long id, UserCreationRequest request);
+    void deleteUser(Long id);
+    User getUserByUsernameEntity(String username);  // Phương thức mới để lấy User entity
     boolean existsByUsername(String username);
 }
