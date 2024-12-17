@@ -33,16 +33,19 @@ public class SecurityConfig {
 
     // Các URL không yêu cầu xác thực
     private static final String[] WHITE_LIST_URL = {
-            "/auth/login",    // Đăng nhập
-            "/auth/register", // Đăng ký
-            "/api/categories/**",  // Các yêu cầu GET đối với danh mục không cần xác thực
-            "/api/products/**"  // Các yêu cầu GET đối với sản phẩm không cần xác thực
+            "/auth/login",
+            "/auth/register",
+            "/api/categories/**",
+            "/api/products/**",
+            "/api/cart/**"
+
     };
 
-    // Các URL yêu cầu xác thực
     private static final String[] SECURED_URL_PATTERNS = {
-            "/api/categories/**",  // Tất cả các API danh mục yêu cầu xác thực cho các POST, PUT, DELETE
-            "/api/products/**"     // Tất cả các API sản phẩm yêu cầu xác thực cho các POST, PUT, DELETE
+            "/api/categories/**",
+            "/api/products/**",
+            "/api/cart/**"
+
     };
 
     // Cấu hình SecurityFilterChain

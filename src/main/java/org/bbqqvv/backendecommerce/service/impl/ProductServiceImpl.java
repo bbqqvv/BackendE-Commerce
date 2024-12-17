@@ -1,15 +1,14 @@
 package org.bbqqvv.backendecommerce.service.impl;
 
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.ImgBBConfig;
 import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
 import org.bbqqvv.backendecommerce.entity.*;
-import org.bbqqvv.backendecommerce.exception.DuplicateProductCodeException;
-import org.bbqqvv.backendecommerce.exception.ProductNotFoundException;
+import org.bbqqvv.backendecommerce.exception.AppException;
+import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.ProductMapper;
 import org.bbqqvv.backendecommerce.repository.CategoryRepository;
 import org.bbqqvv.backendecommerce.repository.ProductRepository;
@@ -47,14 +46,14 @@ public class ProductServiceImpl implements ProductService {
         this.imgBBConfig = imgBBConfig;
         this.fileStorageService = fileStorageService;
     }
+
     @Override
     public ProductResponse createProduct(ProductRequest productRequest) {
         // Kiểm tra nếu product code đã tồn tại
         if (productRepository.existsByProductCode(productRequest.getProductCode())) {
-            throw new DuplicateProductCodeException(
-                    "Product code '" + productRequest.getProductCode() + "' already exists."
-            );
+            throw new AppException(ErrorCode.DUPLICATE_PRODUCT_CODE);
         }
+
         Category category = getCategoryById(productRequest.getCategoryId());
         Product product = createOrUpdateProductEntity(productRequest, category);
         Product savedProduct = productRepository.save(product);
@@ -65,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponse getProductById(Long id) {
         return productRepository.findById(id)
                 .map(productMapper::toProductResponse)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND)); // Dùng AppException với ErrorCode
     }
 
     @Override
@@ -74,31 +73,36 @@ public class ProductServiceImpl implements ProductService {
                 .map(productMapper::toProductResponse)
                 .collect(Collectors.toList());
     }
+
     @Override
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest productRequest) {
         // Kiểm tra sản phẩm có tồn tại hay không
         if (!productRepository.existsById(id)) {
-            throw new ProductNotFoundException("Product not found with id: " + id);
+            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND); // Dùng AppException với ErrorCode
         }
+
         Category category = getCategoryById(productRequest.getCategoryId());
         Product product = createOrUpdateProductEntity(productRequest, category);
         product.setId(id);  // Đảm bảo ID không thay đổi khi cập nhật
         Product savedProduct = productRepository.save(product);
         return productMapper.toProductResponse(savedProduct);
     }
+
     @Override
     public boolean deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new ProductNotFoundException("Product not found with id: " + id);
+            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND); // Dùng AppException với ErrorCode
         }
         productRepository.deleteById(id);
         return true;
     }
+
     private Category getCategoryById(Long categoryId) {
         return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND)); // Dùng AppException với ErrorCode
     }
+
     @Override
     public List<ProductResponse> findProductByCategory(Long categoryId) {
         Category category = getCategoryById(categoryId);
@@ -106,6 +110,7 @@ public class ProductServiceImpl implements ProductService {
                 .map(productMapper::toProductResponse)
                 .collect(Collectors.toList());
     }
+
     private Product createOrUpdateProductEntity(ProductRequest productRequest, Category category) {
         Product product = productMapper.toProduct(productRequest);
         product.setCategory(category);
@@ -117,6 +122,7 @@ public class ProductServiceImpl implements ProductService {
         }
         return product;
     }
+
     private void handleImageUrls(Product product, ProductRequest productRequest) {
         try {
             if (productRequest.getMainImageUrl() != null) {
@@ -155,7 +161,7 @@ public class ProductServiceImpl implements ProductService {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error handling image URLs", e);
+            throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED); // Dùng AppException khi có lỗi trong xử lý ảnh
         }
     }
 }

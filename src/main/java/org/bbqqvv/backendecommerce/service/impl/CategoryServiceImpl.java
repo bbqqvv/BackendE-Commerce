@@ -7,7 +7,8 @@ import org.bbqqvv.backendecommerce.config.ImgBBConfig;
 import org.bbqqvv.backendecommerce.dto.request.CategoryRequest;
 import org.bbqqvv.backendecommerce.dto.response.CategoryResponse;
 import org.bbqqvv.backendecommerce.entity.Category;
-import org.bbqqvv.backendecommerce.exception.CategoryNotFoundException;
+import org.bbqqvv.backendecommerce.exception.AppException;
+import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.CategoryMapper;
 import org.bbqqvv.backendecommerce.repository.CategoryRepository;
 import org.bbqqvv.backendecommerce.service.CategoryService;
@@ -15,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException; // Sửa import đúng
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,36 +39,39 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse createCategory(CategoryRequest categoryRequest) {
         try {
+            if (categoryRepository.existsCategoriesByName(categoryRequest.getName())) {
+                throw new AppException(ErrorCode.USER_EXISTED);
+            }
             // Xử lý upload ảnh
             String imageUrl = handleImageUpload(categoryRequest.getImage());
 
             // Chuyển từ CategoryRequest sang Category
-            Category category = categoryMapper.categoryRequestDTOToCategory(categoryRequest);
+            Category category = categoryMapper.categoryRequestToCategory(categoryRequest);
             category.setImage(imageUrl); // Gán URL ảnh
 
             // Lưu thực thể Category
             Category savedCategory = categoryRepository.save(category);
 
             // Chuyển sang DTO để trả về
-            return categoryMapper.categoryToCategoryResponseDTO(savedCategory);
+            return categoryMapper.categoryToCategoryResponse(savedCategory);
         } catch (IOException e) {
             log.error("Lỗi khi tải ảnh", e);
-            throw new RuntimeException("Không thể tải ảnh", e);
+            throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
     }
 
     @Override
     public CategoryResponse getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục với ID: " + id));
-        return categoryMapper.categoryToCategoryResponseDTO(category);
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND)); // Dùng AppException với ErrorCode
+        return categoryMapper.categoryToCategoryResponse(category);
     }
 
     @Override
     public List<CategoryResponse> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream()
-                .map(categoryMapper::categoryToCategoryResponseDTO)
+                .map(categoryMapper::categoryToCategoryResponse)
                 .collect(Collectors.toList());
     }
 
@@ -75,7 +79,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest) {
         try {
             Category category = categoryRepository.findById(id)
-                    .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục với ID: " + id));
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND)); // Dùng AppException với ErrorCode
 
             // Xử lý upload ảnh mới
             String imageUrl = handleImageUpload(categoryRequest.getImage());
@@ -89,17 +93,17 @@ public class CategoryServiceImpl implements CategoryService {
             Category updatedCategory = categoryRepository.save(category);
 
             // Chuyển sang DTO để trả về
-            return categoryMapper.categoryToCategoryResponseDTO(updatedCategory);
+            return categoryMapper.categoryToCategoryResponse(updatedCategory);
         } catch (IOException e) {
             log.error("Lỗi khi tải ảnh", e);
-            throw new RuntimeException("Không thể tải ảnh", e);
+            throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED); // Dùng AppException khi lỗi upload ảnh
         }
     }
 
     @Override
     public boolean deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("Không tìm thấy danh mục với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND)); // Dùng AppException với ErrorCode
         categoryRepository.delete(category);
         return true;
     }

@@ -5,21 +5,21 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@NoArgsConstructor
-@AllArgsConstructor
+@Entity
+@Table(name = "product_main_images")  // Đặt tên bảng là product_main_images
 @Getter
 @Setter
-@Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-@Table(name = "product_main_images")  // Đặt tên bảng là product_main_images
-public class ProductMainImage extends ProductImage {
+public class ProductMainImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // Tự động tăng id
     @Column(name = "id")  // Cột id
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)  // Liên kết với bảng Product (Nhiều ảnh chính có thể thuộc về 1 sản phẩm)
+    @OneToOne(fetch = FetchType.LAZY)  // Liên kết với bảng Product
     @JoinColumn(name = "product_id", nullable = false)  // Liên kết với bảng Product
     private Product product;
 
@@ -32,10 +32,5 @@ public class ProductMainImage extends ProductImage {
     @PrePersist  // Thêm thời gian khi bản ghi được thêm vào CSDL
     public void prePersist() {
         this.createdAt = LocalDateTime.now();  // Lưu thời gian tạo ảnh
-    }
-
-    public ProductMainImage(String imageUrl, Product product) {
-        this.imageUrl = imageUrl;
-        this.product = product;
     }
 }

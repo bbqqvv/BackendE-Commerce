@@ -1,91 +1,96 @@
 package org.bbqqvv.backendecommerce.exception.global;
 
-import jakarta.persistence.EntityNotFoundException;
+import java.util.Map;
+import java.util.Objects;
 
-import org.bbqqvv.backendecommerce.exception.*;
+import jakarta.validation.ConstraintViolation;
+
+import org.bbqqvv.backendecommerce.dto.request.ApiResponse;
+import org.bbqqvv.backendecommerce.exception.AppException;
+import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import javax.security.auth.login.AccountNotFoundException;
-import java.time.LocalDateTime;
-import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleNotFound(EntityNotFoundException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    private static final String MIN_ATTRIBUTE = "min";
+
+    // Bắt tất cả các loại ngoại lệ không xác định
+    @ExceptionHandler(value = Exception.class)
+    ResponseEntity<ApiResponse> handleAllExceptions(Exception exception) {
+        log.error("Unexpected error occurred: ", exception);
+        ApiResponse apiResponse = new ApiResponse();
+
+        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
+        apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Invalid request: " + e.getMessage());
+    // Bắt AppException, khi lỗi được định nghĩa rõ ràng trong ErrorCode
+    @ExceptionHandler(value = AppException.class)
+    ResponseEntity<ApiResponse> handleAppException(AppException exception) {
+        ErrorCode errorCode = exception.getErrorCode();
+        ApiResponse apiResponse = buildApiResponse(errorCode);
+
+        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 
-    @ExceptionHandler(InsufficientFundsException.class)
-    public ResponseEntity<String> handleInsufficientFundsException(InsufficientFundsException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    // Bắt AccessDeniedException, khi người dùng không có quyền truy cập
+    @ExceptionHandler(value = AccessDeniedException.class)
+    ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException exception) {
+        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+        ApiResponse apiResponse = buildApiResponse(errorCode);
+
+        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
     }
 
-    @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<String> handleAccountNotFoundException(AccountNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    // Bắt MethodArgumentNotValidException, khi validation thất bại
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    ResponseEntity<ApiResponse> handleValidationExceptions(MethodArgumentNotValidException exception) {
+        String enumKey = exception.getBindingResult().getFieldError().getDefaultMessage();
+
+        ErrorCode errorCode = ErrorCode.PRODUCT_NOT_FOUND;
+        Map<String, Object> attributes = null;
+
+        try {
+            errorCode = ErrorCode.valueOf(enumKey);
+            var constraintViolation = exception.getBindingResult().getAllErrors().get(0).unwrap(ConstraintViolation.class);
+            attributes = constraintViolation.getConstraintDescriptor().getAttributes();
+            log.info("Validation error attributes: {}", attributes);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid enum key for validation error: {}", enumKey);
+        }
+
+        ApiResponse apiResponse = new ApiResponse();
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessage(Objects.nonNull(attributes)
+                ? mapAttributes(errorCode.getMessage(), attributes)
+                : errorCode.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
     }
 
-    @ExceptionHandler(InvalidAmountException.class)
-    public ResponseEntity<String> handleInvalidAmountException(InvalidAmountException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    // Xử lý riêng để xây dựng ApiResponse
+    private ApiResponse buildApiResponse(ErrorCode errorCode) {
+        return ApiResponse.builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
     }
 
-    @ExceptionHandler(CategoryNotFoundException.class)
-    public ResponseEntity<Object> handleCategoryNotFoundException(CategoryNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                Map.of(
-                        "timestamp", LocalDateTime.now(),
-                        "status", HttpStatus.NOT_FOUND.value(),
-                        "error", "Category Not Found",
-                        "message", ex.getMessage()
-                )
-        );
+    // Thay thế giá trị tham số trong thông điệp với các thuộc tính
+    private String mapAttributes(String message, Map<String, Object> attributes) {
+        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));
+        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
     }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                Map.of(
-                        "timestamp", LocalDateTime.now(),
-                        "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "error", "Internal Server Error",
-                        "message", ex.getMessage()
-                )
-        );
-    }
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<Object> handleProductNotFoundException(ProductNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                Map.of(
-                        "timestamp", LocalDateTime.now(),
-                        "status", HttpStatus.NOT_FOUND.value(),
-                        "error", "Product Not Found",
-                        "message", ex.getMessage()
-                )
-        );
-    }
-
-    @ExceptionHandler(DuplicateProductCodeException.class)
-    public ResponseEntity<Object> handleDuplicateProductCodeException(DuplicateProductCodeException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                Map.of(
-                        "timestamp", LocalDateTime.now(),
-                        "status", HttpStatus.CONFLICT.value(),
-                        "error", "Duplicate Product Code",
-                        "message", ex.getMessage()
-                )
-        );
-    }
-    
 }

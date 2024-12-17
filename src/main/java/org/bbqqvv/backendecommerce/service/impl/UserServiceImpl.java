@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.entity.User;
+import org.bbqqvv.backendecommerce.exception.AppException;
+import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.UserMapper;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.UserService;
@@ -29,6 +31,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(UserCreationRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
         // Map RegisterUserRequest -> User entity
         User user = userMapper.toUser(request);
 
@@ -41,10 +46,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUserById(Long id) {
-        User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            return null; // Hoặc throw exception tùy theo yêu cầu.
-        }
+        // Kiểm tra người dùng có tồn tại không
+        User user = userRepository.findById(id).orElseThrow(() ->
+                new AppException(ErrorCode.USER_NOT_FOUND)
+        );
         return userMapper.toUserResponse(user);
     }
 
@@ -59,6 +64,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserResponse> getAllUsers() {
+        // Lấy tất cả người dùng và map thành UserResponse
         return userRepository.findAll()
                 .stream()
                 .map(userMapper::toUserResponse)
@@ -67,10 +73,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse updateUser(Long id, UserCreationRequest request) {
-        User user = userRepository.findById(id).orElse(null);
-        if (user == null) {
-            return null; // Hoặc throw exception tùy theo yêu cầu.
-        }
+        // Kiểm tra người dùng có tồn tại không
+        User user = userRepository.findById(id).orElseThrow(() ->
+                new AppException(ErrorCode.USER_NOT_FOUND)
+        );
 
         // Cập nhật thông tin từ DTO
         user.setUsername(request.getUsername());
@@ -83,14 +89,20 @@ public class UserServiceImpl implements UserService {
         // Map User entity -> UserResponse
         return userMapper.toUserResponse(updatedUser);
     }
-
     @Override
     public void deleteUser(Long id) {
+        // Kiểm tra người dùng có tồn tại không trước khi xóa
+        User user = userRepository.findById(id).orElseThrow(() ->
+                new AppException(ErrorCode.USER_NOT_FOUND)
+        );
+
+        // Xóa người dùng
         userRepository.deleteById(id);
     }
 
     @Override
     public boolean existsByUsername(String username) {
+        // Kiểm tra xem username đã tồn tại trong cơ sở dữ liệu chưa
         return userRepository.existsByUsername(username);
     }
 }

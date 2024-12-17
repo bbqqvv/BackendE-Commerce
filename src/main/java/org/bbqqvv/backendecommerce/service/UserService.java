@@ -7,12 +7,17 @@ import org.bbqqvv.backendecommerce.entity.User;
 import java.util.List;
 
 public interface UserService {
-
     UserResponse createUser(UserCreationRequest request);
+
     UserResponse getUserById(Long id);
+
     List<UserResponse> getAllUsers();
+
     UserResponse updateUser(Long id, UserCreationRequest request);
+
     void deleteUser(Long id);
+
     User getUserByUsernameEntity(String username);  // Phương thức mới để lấy User entity
+
     boolean existsByUsername(String username);
 }

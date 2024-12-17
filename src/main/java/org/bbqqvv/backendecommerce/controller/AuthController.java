@@ -2,9 +2,9 @@ package org.bbqqvv.backendecommerce.controller;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-import org.bbqqvv.backendecommerce.dto.JwtResponse;
 import org.bbqqvv.backendecommerce.dto.request.AuthenticationRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
+import org.bbqqvv.backendecommerce.dto.response.JwtResponse;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.service.auth.AuthenticationService;
 import org.springframework.http.HttpStatus;
@@ -21,11 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     AuthenticationService authenticationService;
-
     public AuthController(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
-
     // Đăng ký người dùng
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@RequestBody UserCreationRequest creationRequest) {
