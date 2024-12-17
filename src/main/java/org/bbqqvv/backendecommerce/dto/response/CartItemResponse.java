@@ -1,17 +1,18 @@
 package org.bbqqvv.backendecommerce.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
 import java.math.BigDecimal;
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CartItemResponse {
-    private Long productId;      // ID sản phẩm
-    private int quantity;        // Số lượng
-    private BigDecimal price;    // Giá sản phẩm
-    private ProductResponse product; // Thông tin sản phẩm, bao gồm ảnh
+    private Long id;
+    private Long productId;
+    private String productName;
+    private String mainImageUrl;
+    private int quantity;
+    private BigDecimal price;
 }
