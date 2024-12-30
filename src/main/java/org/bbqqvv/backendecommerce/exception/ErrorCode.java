@@ -46,6 +46,14 @@ public enum ErrorCode {
     INVALID_DOB(7001, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_FUNDS(7002, "Insufficient funds", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(7003, "You do not have permission", HttpStatus.FORBIDDEN),
+    REMOVE_FAVOURITE_NOT_FOUND(7004, "Favourite not found for user with ID: {userId} and product with ID: {productId}", HttpStatus.NOT_FOUND),
+    PRODUCT_ALREADY_FAVOURITE(7005, "Product with ID: {productId} is already in the favourites list of user with ID: {userId}", HttpStatus.BAD_REQUEST),
+
+    // 8000 Series - Address Validation Errors
+    ADDRESS_VALIDATION_FAILED(8001, "Address validation failed: {reason}", HttpStatus.BAD_REQUEST),
+    ADDRESS_PHONE_INVALID(8002, "Invalid phone number format", HttpStatus.BAD_REQUEST),
+    ADDRESS_NOT_FOUND(8003, "Address not found", HttpStatus.NOT_FOUND),
+    ADDRESS_DEFAULT_CANNOT_DELETE(8004, "Default address cannot be deleted", HttpStatus.BAD_REQUEST),
 
     // Uncategorized Errors
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);

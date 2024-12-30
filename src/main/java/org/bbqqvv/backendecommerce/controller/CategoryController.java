@@ -1,6 +1,6 @@
 package org.bbqqvv.backendecommerce.controller;
 
-import org.bbqqvv.backendecommerce.dto.request.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.request.CategoryRequest;
 import org.bbqqvv.backendecommerce.dto.response.CategoryResponse;
 import org.bbqqvv.backendecommerce.service.CategoryService;

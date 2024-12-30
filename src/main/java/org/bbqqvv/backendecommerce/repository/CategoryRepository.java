@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
     // Các phương thức truy vấn tùy chỉnh nếu cần
     boolean existsCategoriesByName(String name);
+
+    Category findBySlug(String slug);
 }

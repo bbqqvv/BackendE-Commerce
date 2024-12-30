@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import jakarta.validation.ConstraintViolation;
 
-import org.bbqqvv.backendecommerce.dto.request.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.exception.AppException;
 import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
@@ -14,8 +14,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-
 import lombok.extern.slf4j.Slf4j;
 
 @ControllerAdvice

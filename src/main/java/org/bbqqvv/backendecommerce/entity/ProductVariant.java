@@ -22,24 +22,31 @@ public class ProductVariant {
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
-    private Product product; // Liên kết với sản phẩm
+    private Product product;
 
     @Column(nullable = false)
-    private String size; // Kích thước
+    private String size;
 
     @Column(nullable = false)
-    private String color; // Màu sắc
+    private String color;
+
     @Column(nullable = false)
-    private BigDecimal price; // Giá của biến thể sản phẩm
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private BigDecimal price;
+
+    private BigDecimal priceAfterDiscount;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
+
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }

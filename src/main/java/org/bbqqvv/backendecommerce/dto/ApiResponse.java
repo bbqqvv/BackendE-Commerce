@@ -1,4 +1,4 @@
-package org.bbqqvv.backendecommerce.dto.request;
+package org.bbqqvv.backendecommerce.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

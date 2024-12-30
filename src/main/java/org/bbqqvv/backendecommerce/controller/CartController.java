@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.request.CartRequest;
 import org.bbqqvv.backendecommerce.dto.response.CartResponse;
 import org.bbqqvv.backendecommerce.service.CartService;
-import org.bbqqvv.backendecommerce.dto.request.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

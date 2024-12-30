@@ -1,8 +1,6 @@
 package org.bbqqvv.backendecommerce.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,10 +21,13 @@ public class Product {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @Column(nullable = false, unique = true, length = 100)
+    private String slug;
+
     @Column(length = 200)
     private String shortDescription;
 
-    @Column(length = 500)
+    @Column(length = 5000)
     private String description;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -38,11 +39,23 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private int salePercentage;
+
     @Column(nullable = true)
     private boolean featured;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Column(nullable = true)
     private boolean sale;
+
+    @Column(nullable = true)
+    private BigDecimal priceAfterDiscount;
+
+    @Column(nullable = true)
+    private boolean isOldProduct;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
@@ -50,6 +63,9 @@ public class Product {
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
     private ProductMainImage mainImage;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<Favourite> favourites;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<ProductSecondaryImage> secondaryImages;
@@ -60,17 +76,22 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<ProductVariant> variants;
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private List<ProductReview> reviews;
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
-
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
-
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+    public boolean isSaleActive() {
+        return sale && salePercentage > 0;
     }
 }

@@ -57,14 +57,12 @@ public class UserServiceImpl implements UserService {
     public User getUserByUsernameEntity(String username) {
         User user = userRepository.findByUsername(username);
         if (user == null) {
-            return null; // Hoặc throw exception tùy theo yêu cầu.
+            return null;
         }
-        return userRepository.findByUsername(username); // Trả về User entity chứa mật khẩu
+        return userRepository.findByUsername(username);
     }
-
     @Override
     public List<UserResponse> getAllUsers() {
-        // Lấy tất cả người dùng và map thành UserResponse
         return userRepository.findAll()
                 .stream()
                 .map(userMapper::toUserResponse)

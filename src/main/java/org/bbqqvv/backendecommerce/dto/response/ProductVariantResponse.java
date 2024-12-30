@@ -16,10 +16,4 @@ public class ProductVariantResponse {
     private String size;
     private String color;
     private BigDecimal price;
-
-    public ProductVariantResponse(String color, String size, BigDecimal price) {
-        this.color = color;
-        this.size = size;
-        this.price = price;
-    }
 }

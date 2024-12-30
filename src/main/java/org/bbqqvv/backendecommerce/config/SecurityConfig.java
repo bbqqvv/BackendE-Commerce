@@ -37,15 +37,16 @@ public class SecurityConfig {
             "/auth/register",
             "/api/categories/**",
             "/api/products/**",
-            "/api/cart/**"
+            "/api/cart/**",
+            "api/addresses/**",
+            "api/favourites/**"
+
 
     };
-
     private static final String[] SECURED_URL_PATTERNS = {
-            "/api/categories/**",
-            "/api/products/**",
-            "/api/cart/**"
-
+            "/api/**",
+            "/admin/**",
+            "/user/**"
     };
 
     // Cấu hình SecurityFilterChain

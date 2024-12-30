@@ -9,12 +9,9 @@ public interface ProductService {
     ProductResponse createProduct(ProductRequest productRequest);
 
     ProductResponse getProductById(Long id);
-
+    ProductResponse getProductBySlug(String slug);
     List<ProductResponse> getAllProducts();
-
     ProductResponse updateProduct(Long id, ProductRequest productRequest);
-
     boolean deleteProduct(Long id);
-
-    List<ProductResponse> findProductByCategory(Long categoryId);
+    List<ProductResponse> findProductByCategorySlug(String slug);
 }

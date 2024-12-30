@@ -88,7 +88,7 @@ public class CartServiceImpl implements CartService {
         cart.setTotalPrice(totalPrice);
         cartRepository.save(cart);  // Cập nhật lại Cart
 
-        return cartMapper.cartToCartResponse(cart);
+        return cartMapper.toCartResponse(cart);
     }
 
 
@@ -112,7 +112,7 @@ public class CartServiceImpl implements CartService {
         cart.setTotalPrice(totalPrice);
         cartRepository.save(cart);
 
-        return cartMapper.cartToCartResponse(cart);
+        return cartMapper.toCartResponse(cart);
     }
 
     @Override
@@ -132,9 +132,8 @@ public class CartServiceImpl implements CartService {
         cart.setTotalPrice(totalPrice);
         cartRepository.save(cart);
 
-        return cartMapper.cartToCartResponse(cart);
+        return cartMapper.toCartResponse(cart);
     }
-
     @Override
     @Transactional
     public CartResponse getCartByUserId(Long userId) {
@@ -142,7 +141,7 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new IllegalArgumentException("Giỏ hàng không tồn tại"));
 
         List<CartItemResponse> cartItemResponses = cart.getCartItems().stream()
-                .map(cartItemMapper::cartToCartItemResponse)
+                .map(cartItemMapper::toCartItemResponse)
                 .collect(Collectors.toList());
 
         BigDecimal totalPrice = cartItemResponses.stream()
@@ -156,12 +155,11 @@ public class CartServiceImpl implements CartService {
                 .totalPrice(totalPrice)
                 .build();
     }
-
     @Override
     public List<CartResponse> getAllCarts() {
         List<Cart> carts = cartRepository.findAll();
         return carts.stream()
-                .map(cartMapper::cartToCartResponse)
+                .map(cartMapper::toCartResponse)
                 .collect(Collectors.toList());
     }
 

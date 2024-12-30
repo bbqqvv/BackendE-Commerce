@@ -1,6 +1,6 @@
 package org.bbqqvv.backendecommerce.controller;
 
-import org.bbqqvv.backendecommerce.dto.request.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.bbqqvv.backendecommerce.service.ProductService;
@@ -32,6 +32,14 @@ public class ProductController {
                 .data(productService.getProductById(id))
                 .build();
     }
+    // Lấy sản phẩm theo Slug
+    @GetMapping("/slug/{slug}")
+    public ApiResponse<ProductResponse> getProductBySlug(@PathVariable String slug) {
+        ProductResponse product = productService.getProductBySlug(slug);
+        return ApiResponse.<ProductResponse>builder()
+                .data(product)
+                .build();
+    }
 
     // Lấy danh sách tất cả sản phẩm
     @GetMapping
@@ -41,13 +49,21 @@ public class ProductController {
                 .build();
     }
 
-    // Lấy sản phẩm theo danh mục
-    @GetMapping("/find-by-category/{categoryId}")
-    public ApiResponse<List<ProductResponse>> getProductByCategory(@PathVariable Long categoryId) {
+//    // Lấy sản phẩm theo danh mục
+//    @GetMapping("/find-by-category/{categoryId}")
+//    public ApiResponse<List<ProductResponse>> getProductByCategory(@PathVariable Long categoryId) {
+//        return ApiResponse.<List<ProductResponse>>builder()
+//                .data(productService.findProductByCategory(categoryId))
+//                .build();
+//    }
+    @GetMapping("/find-by-category-slug/{slug}")
+    public ApiResponse<List<ProductResponse>> findProductByCategorySlug(@PathVariable String slug) {
+        List<ProductResponse> products = productService.findProductByCategorySlug(slug);
         return ApiResponse.<List<ProductResponse>>builder()
-                .data(productService.findProductByCategory(categoryId))
+                .data(products)
                 .build();
     }
+
 
     // Cập nhật thông tin sản phẩm
     @PutMapping("/{id}")

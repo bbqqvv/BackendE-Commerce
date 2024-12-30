@@ -1,7 +1,7 @@
 package org.bbqqvv.backendecommerce.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.bbqqvv.backendecommerce.dto.request.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.service.UserService;

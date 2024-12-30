@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Configuration
 public class ImgBBConfig {
-
+    
     private final String API_KEY = "e567c666a355b1543f9afbdcf3927ff5";
 
     public String uploadImage(MultipartFile image) {

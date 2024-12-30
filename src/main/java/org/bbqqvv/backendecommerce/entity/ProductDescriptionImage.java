@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @Builder
 @Table(name = "product_description_images")  // Đặt tên bảng là product_description_images
 public class ProductDescriptionImage extends ProductImage {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)  // Tự động tăng id
     @Column(name = "id")  // Cột id
@@ -32,10 +31,5 @@ public class ProductDescriptionImage extends ProductImage {
     @PrePersist  // Thêm thời gian khi bản ghi được thêm
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    public ProductDescriptionImage(String imageUrl, Product product) {
-        this.imageUrl = imageUrl;
-        this.product = product;
     }
 }

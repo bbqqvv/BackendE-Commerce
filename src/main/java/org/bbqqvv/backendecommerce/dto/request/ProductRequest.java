@@ -21,10 +21,11 @@ public class ProductRequest {
     private BigDecimal price;
     private boolean featured;
     private boolean sale;
+    private int salePercentage;
     private Long categoryId;
     private MultipartFile mainImageUrl;
     private List<MultipartFile> secondaryImageUrls;
     private List<MultipartFile> descriptionImageUrls;
-    private List<ProductVariantRequest> variants;  // Thêm trường này
+    private List<ProductVariantRequest> variants;
 
 }

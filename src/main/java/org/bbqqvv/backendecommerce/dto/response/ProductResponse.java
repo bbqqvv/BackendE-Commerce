@@ -16,6 +16,7 @@ import java.util.List;
 public class ProductResponse {
     private Long id;
     private String name;
+    private String slug;
     private String shortDescription;
     private String description;
     private String productCode;
@@ -23,6 +24,7 @@ public class ProductResponse {
     private BigDecimal price;
     private boolean featured;
     private boolean sale;
+    private int salePercentage;
     private Long categoryId;
     private String mainImageUrl;
     private List<String> secondaryImageUrls;
