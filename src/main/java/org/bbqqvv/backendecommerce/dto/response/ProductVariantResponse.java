@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ProductVariantResponse {
     private Long id;
-    private String size;
+    private List<SizeProductResponse> sizes;
     private String color;
-    private BigDecimal price;
+    private String imageUrl;
 }

@@ -11,9 +11,6 @@ import java.util.List;
 @Getter
 @Builder
 public class CartRequest {
-    @NotNull(message = "User ID cannot be null")
-    private Long userId;
-
     @NotNull(message = "Cart items cannot be null")
     private List<CartItemRequest> items;
 }

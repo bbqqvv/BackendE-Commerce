@@ -13,31 +13,21 @@ public class SlugUtils {
         // Bước 1: Tiến hành thay thế các ký tự có dấu với ký tự tương ứng không dấu.
         String normalized = input
                 // Dấu trong tiếng Việt
-                .replaceAll("à|á|ạ|ả|ã|ạ", "a")
-                .replaceAll("â|ầ|ấ|ậ|ẩ|ẫ", "a")
-                .replaceAll("ă|ằ|ắ|ặ|ẳ|ẵ", "a")
-                .replaceAll("è|é|ẹ|ẻ|ẽ|ệ", "e")
-                .replaceAll("ê|ề|ế|ệ|ể|ễ", "e")
-                .replaceAll("ì|í|ị|ỉ|ĩ", "i")
-                .replaceAll("ò|ó|ọ|ỏ|õ|ố|ồ|ộ|ổ|ỗ", "o")
-                .replaceAll("ô|ồ|ố|ộ|ổ|ỗ", "o")
-                .replaceAll("ơ|ờ|ớ|ợ|ở|ỡ", "o")
-                .replaceAll("ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ", "u")
-                .replaceAll("ý|ỳ|ỵ|ỷ|ỹ", "y")
-                .replaceAll("đ", "d")
-                .replaceAll("Đ", "D")
+                .replaceAll("[ÀÁẠẢÃAàáạảã]", "a")
+                .replaceAll("[ÂẦẤẬẨẪâầấậẩẫ]", "a")
+                .replaceAll("[ĂẰẮẶẲẴăằắặẳẵ]", "a")
+                .replaceAll("[ÈÉẸẺẼỆèéẹẻẽệ]", "e")
+                .replaceAll("[ÊỀẾỆỂỄêềếệểễ]", "e")
+                .replaceAll("[ÌÍỊỈĨìíịỉĩ]", "i")
+                .replaceAll("[ÒÓỌỎÕỐỒỘỔỖòóọỏõốồộổỗ]", "o")
+                .replaceAll("[ÔỒỐỘỔỖôồốộổỗ]", "o")
+                .replaceAll("[ƠỜỚỢỞỠơờớợởỡ]", "o")
+                .replaceAll("[ÙÚỤỦŨƯỪỨỰỬỮùúụủũưừứựửữ]", "u")
+                .replaceAll("[ÝỲỴỶỸýỳỵỷỹ]", "y")
+                .replaceAll("[đ]", "d")
+                .replaceAll("[Đ]", "D")
 
-                // Thêm các ký tự có dấu tiếng Việt khác
-                .replaceAll("ò|ó|ọ|ỏ|õ", "o")
-                .replaceAll("ú|ù|ũ|ủ", "u")
-                .replaceAll("é|è|ẹ|ẻ|ẽ", "e")
-                .replaceAll("í|ì|ỉ|ĩ|ị", "i")
-                .replaceAll("ô|ồ|ố|ộ|ổ", "o")
-                .replaceAll("ề|ế|ệ|ể|ễ", "e")
-                .replaceAll("ả|ạ|á|à|ã", "a")
-                .replaceAll("ừ|ứ|ự|ử|ữ", "u")
-
-                // Thêm ký tự đặc biệt tiếng Việt và Unicode khác
+                // Các ký tự khác như ç, ñ, và ký tự đặc biệt
                 .replaceAll("ç", "c")   // ký tự ç
                 .replaceAll("ñ", "n")   // ký tự ñ
                 .replaceAll("ã", "a")   // ký tự ã
@@ -46,6 +36,9 @@ public class SlugUtils {
                 .replaceAll("å", "a")   // ký tự å
                 .replaceAll("ø", "o")   // ký tự ø
                 .replaceAll("ý", "y")   // ký tự ý
+                .replaceAll("Æ", "ae")  // ký tự Æ
+                .replaceAll("ø", "o")   // ký tự ø
+                .replaceAll("ø", "o")   // ký tự ø
 
                 // Bước 2: Chuyển thành chữ thường
                 .toLowerCase(Locale.ENGLISH);
@@ -66,7 +59,7 @@ public class SlugUtils {
     }
 
     public static void main(String[] args) {
-        String input = "Tây âu";
+        String input = "Đảm bảo rằng mọi ký tự đều được chuyển về chữ thường bằng .toLowerCase(Locale.ENGLISH)";
         String slug = toSlug(input);
         System.out.println(slug); // In kết quả slug
     }

@@ -1,14 +1,15 @@
 package org.bbqqvv.backendecommerce.controller;
 
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.bbqqvv.backendecommerce.service.ProductService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -20,56 +21,62 @@ public class ProductController {
     // Tạo mới một sản phẩm
     @PostMapping
     public ApiResponse<ProductResponse> createProduct(@ModelAttribute ProductRequest productRequest) {
+        ProductResponse product = productService.createProduct(productRequest);
         return ApiResponse.<ProductResponse>builder()
-                .data(productService.createProduct(productRequest))
+                .message("Product created successfully")
+                .data(product)
                 .build();
     }
 
     // Lấy sản phẩm theo ID
     @GetMapping("/{id}")
     public ApiResponse<ProductResponse> getProductById(@PathVariable Long id) {
+        ProductResponse product = productService.getProductById(id);
         return ApiResponse.<ProductResponse>builder()
-                .data(productService.getProductById(id))
-                .build();
-    }
-    // Lấy sản phẩm theo Slug
-    @GetMapping("/slug/{slug}")
-    public ApiResponse<ProductResponse> getProductBySlug(@PathVariable String slug) {
-        ProductResponse product = productService.getProductBySlug(slug);
-        return ApiResponse.<ProductResponse>builder()
+                .message("Product retrieved successfully")
                 .data(product)
                 .build();
     }
 
-    // Lấy danh sách tất cả sản phẩm
+    // Lấy sản phẩm theo Slug
+    @GetMapping("slug/{slug}")
+    public ApiResponse<ProductResponse> getProductBySlug(@PathVariable String slug) {
+        ProductResponse product = productService.getProductBySlug(slug);
+        return ApiResponse.<ProductResponse>builder()
+                .message("Product retrieved successfully")
+                .data(product)
+                .build();
+    }
+
+    // Lấy danh sách tất cả sản phẩm với phân trang
     @GetMapping
-    public ApiResponse<List<ProductResponse>> getAllProducts() {
-        return ApiResponse.<List<ProductResponse>>builder()
-                .data(productService.getAllProducts())
+    public ApiResponse<PageResponse<ProductResponse>> getAllProducts(@PageableDefault(size = 10) Pageable pageable) {
+        PageResponse<ProductResponse> productPage = productService.getAllProducts(pageable);
+        return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .message("Product list retrieved successfully")
+                .data(productPage)
                 .build();
     }
 
-//    // Lấy sản phẩm theo danh mục
-//    @GetMapping("/find-by-category/{categoryId}")
-//    public ApiResponse<List<ProductResponse>> getProductByCategory(@PathVariable Long categoryId) {
-//        return ApiResponse.<List<ProductResponse>>builder()
-//                .data(productService.findProductByCategory(categoryId))
-//                .build();
-//    }
+    // Lấy sản phẩm theo danh mục với phân trang
     @GetMapping("/find-by-category-slug/{slug}")
-    public ApiResponse<List<ProductResponse>> findProductByCategorySlug(@PathVariable String slug) {
-        List<ProductResponse> products = productService.findProductByCategorySlug(slug);
-        return ApiResponse.<List<ProductResponse>>builder()
-                .data(products)
+    public ApiResponse<PageResponse<ProductResponse>> findProductByCategorySlug(
+            @PathVariable String slug,
+            @PageableDefault(size = 10) Pageable pageable) {
+        PageResponse<ProductResponse> productPage = productService.findProductByCategorySlug(slug, pageable);
+        return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .message("Products retrieved by category successfully")
+                .data(productPage)
                 .build();
     }
-
 
     // Cập nhật thông tin sản phẩm
     @PutMapping("/{id}")
     public ApiResponse<ProductResponse> updateProduct(@PathVariable Long id, @ModelAttribute ProductRequest productRequest) {
+        ProductResponse updatedProduct = productService.updateProduct(id, productRequest);
         return ApiResponse.<ProductResponse>builder()
-                .data(productService.updateProduct(id, productRequest))
+                .message("Product updated successfully")
+                .data(updatedProduct)
                 .build();
     }
 
@@ -78,7 +85,8 @@ public class ProductController {
     public ApiResponse<String> deleteProduct(@PathVariable Long id) {
         boolean deleted = productService.deleteProduct(id);
         return ApiResponse.<String>builder()
-                .data(deleted ? "Product has been deleted" : "Product not found")
+                .message(deleted ? "Product deleted successfully" : "Product not found")
+                .data(deleted ? "Deleted" : "Not found")
                 .build();
     }
 }

@@ -8,13 +8,13 @@ spring:
       max-request-size: 10MB
   datasource:
     url: jdbc:postgresql://localhost:5432/roway
-    username: postgres
+    username: vanbui
     password: Vanbui262004@
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -24,4 +24,4 @@ application:
   security:
     jwt:
       secret-key: V0qfFwSH4RKrjG7F60Mm5NklyLTy2DsdDhRU03G2A1s=
-      expiration: 86400000 # Thời gian hết hạn (1 ngày)
+      expiration: 86400000

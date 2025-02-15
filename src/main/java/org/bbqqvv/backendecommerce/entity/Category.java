@@ -31,6 +31,9 @@ public class Category {
     @Column(length = 200)
     private String image;
 
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SizeCategory> sizeCategories;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

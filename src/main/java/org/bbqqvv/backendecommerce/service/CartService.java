@@ -2,26 +2,26 @@ package org.bbqqvv.backendecommerce.service;
 
 import org.bbqqvv.backendecommerce.dto.request.CartRequest;
 import org.bbqqvv.backendecommerce.dto.response.CartResponse;
-import org.bbqqvv.backendecommerce.entity.Cart;
-import java.util.List;
 
 public interface CartService {
 
-    // Thêm sản phẩm vào giỏ hàng
-    CartResponse addProductToCart(CartRequest cartRequest);
+    /**
+     * Thêm hoặc cập nhật sản phẩm trong giỏ hàng
+     */
+    CartResponse addOrUpdateProductInCart(CartRequest cartRequest);
 
-    // Cập nhật thông tin giỏ hàng (số lượng sản phẩm, v.v.)
-    CartResponse updateCart(CartRequest cartRequest);
+    /**
+     * Xóa một sản phẩm khỏi giỏ hàng theo productId, size, color
+     */
+    CartResponse removeProductFromCart(Long productId, String sizeName, String color);
 
-    // Xóa sản phẩm khỏi giỏ hàng
-    CartResponse removeProductFromCart(Long productId);
+    /**
+     * Lấy giỏ hàng của người dùng hiện tại
+     */
+    CartResponse getCartByUserId();
 
-    // Lấy giỏ hàng của người dùng
-    CartResponse getCartByUserId(Long userId);
-
-    // Lấy tất cả các giỏ hàng (thường chỉ dành cho admin)
-    List<CartResponse> getAllCarts();
-
-    // Xóa giỏ hàng của người dùng (ví dụ sau khi thanh toán)
-    void clearCart(Long userId);
+    /**
+     * Xóa toàn bộ giỏ hàng
+     */
+    void clearCart();
 }

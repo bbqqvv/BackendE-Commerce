@@ -7,9 +7,11 @@ import org.bbqqvv.backendecommerce.config.ImgBBConfig;
 import org.bbqqvv.backendecommerce.dto.request.CategoryRequest;
 import org.bbqqvv.backendecommerce.dto.response.CategoryResponse;
 import org.bbqqvv.backendecommerce.entity.Category;
+import org.bbqqvv.backendecommerce.entity.SizeCategory;
 import org.bbqqvv.backendecommerce.exception.AppException;
 import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.CategoryMapper;
+import org.bbqqvv.backendecommerce.mapper.SizeMapper;
 import org.bbqqvv.backendecommerce.repository.CategoryRepository;
 import org.bbqqvv.backendecommerce.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +29,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     CategoryRepository categoryRepository;
     CategoryMapper categoryMapper;
+    SizeMapper sizeMapper;
     ImgBBConfig imgBBConfig;
 
     @Autowired
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ImgBBConfig imgBBConfig, CategoryMapper categoryMapper) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, ImgBBConfig imgBBConfig, CategoryMapper categoryMapper, SizeMapper sizeMapper) {
         this.categoryRepository = categoryRepository;
         this.imgBBConfig = imgBBConfig;
         this.categoryMapper = categoryMapper;
+        this.sizeMapper = sizeMapper;
     }
 
     @Override
@@ -49,6 +53,14 @@ public class CategoryServiceImpl implements CategoryService {
             Category category = categoryMapper.categoryRequestToCategory(categoryRequest);
             category.setImage(imageUrl); // Gán URL ảnh
 
+            if (categoryRequest.getSizes() != null && !categoryRequest.getSizes().isEmpty()) {
+                List<SizeCategory> sizeCategories = categoryRequest.getSizes().stream()
+                        .map(sizeMapper::toSize)
+                        .peek(size -> size.setCategory(category))
+                        .collect(Collectors.toList());
+                category.setSizeCategories(sizeCategories);
+            }
+
             // Lưu thực thể Category
             Category savedCategory = categoryRepository.save(category);
 
@@ -59,6 +71,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
     }
+
 
     @Override
     public CategoryResponse getCategoryById(Long id) {
@@ -89,6 +102,15 @@ public class CategoryServiceImpl implements CategoryService {
             category.setName(categoryRequest.getName());
             category.setImage(imageUrl); // Gán URL ảnh mới
 
+            // Xử lý danh sách sizes
+            if (categoryRequest.getSizes() != null && !categoryRequest.getSizes().isEmpty()) {
+                List<SizeCategory> sizeCategories = categoryRequest.getSizes().stream()
+                        .map(sizeMapper::toSize)
+                        .peek(size -> size.setCategory(category)) // Gán Category cho Size
+                        .collect(Collectors.toList());
+                category.setSizeCategories(sizeCategories); // Gán danh sách sizes vào category
+            }
+
             // Lưu lại danh mục đã cập nhật
             Category updatedCategory = categoryRepository.save(category);
 
@@ -100,6 +122,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+
     @Override
     public boolean deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
@@ -110,8 +133,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     private String handleImageUpload(MultipartFile image) throws IOException {
         if (image != null && !image.isEmpty()) {
-            return imgBBConfig.uploadImage(image); // Thực hiện upload ảnh qua ImgBBConfig
+            return imgBBConfig.uploadImage(image);
         }
-        return null; // Trả về null nếu không có ảnh
+        return null;
     }
 }

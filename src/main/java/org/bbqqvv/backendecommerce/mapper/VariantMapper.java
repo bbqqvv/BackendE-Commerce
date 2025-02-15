@@ -8,11 +8,12 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {SizeProductMapper.class})
 public interface VariantMapper {
-    ProductVariantResponse toProductVariantResponse(ProductVariant variant);
-    List<ProductVariantResponse> toProductVariantResponses(List<ProductVariant> variants);
-    @Mapping(target = "product", ignore = true) // Ignore the product field to avoid circular references
+    @Mapping(target = "imageUrl", ignore = true)
     ProductVariant toProductVariant(ProductVariantRequest request);
+    @Mapping(target = "sizeProducts", source = "sizeName")
     List<ProductVariant> toProductVariants(List<ProductVariantRequest> requests);
+    @Mapping(target = "sizes",source = "productVariantSizes")
+    ProductVariantResponse toProductVariantResponse(ProductVariant productVariant);
 }

@@ -1,8 +1,9 @@
 package org.bbqqvv.backendecommerce.dto.response;
 
 import lombok.*;
-import org.bbqqvv.backendecommerce.entity.Product;
-import org.bbqqvv.backendecommerce.entity.User;
+
+import java.math.BigDecimal;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Setter
@@ -13,5 +14,5 @@ public class FavouriteResponse {
     private Long userId;
     private String nameProduct;
     private String imageUrl;
-    private String price;
+    private BigDecimal price;
 }

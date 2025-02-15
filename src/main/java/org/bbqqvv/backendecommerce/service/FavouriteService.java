@@ -1,7 +1,6 @@
 package org.bbqqvv.backendecommerce.service;
 
 import org.bbqqvv.backendecommerce.dto.response.FavouriteResponse;
-import org.bbqqvv.backendecommerce.entity.Favourite;
 
 import java.util.List;
 

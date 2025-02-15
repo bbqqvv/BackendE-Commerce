@@ -1,9 +1,6 @@
 package org.bbqqvv.backendecommerce.dto.response;
 
 import lombok.*;
-import org.bbqqvv.backendecommerce.entity.User;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,7 +16,6 @@ public class AddressResponse {
     private String commune;
     private String addressLine;
     private String phoneNumber;
-    private boolean isDefault;
-    LocalDateTime createdAt;
-    LocalDateTime updatedAt;
+    private boolean defaultAddress;
+
 }

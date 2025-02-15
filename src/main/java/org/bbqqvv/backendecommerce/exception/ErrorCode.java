@@ -23,7 +23,7 @@ public enum ErrorCode {
     PRODUCT_NOT_FOUND(2001, "Product not found with ID: {id}", HttpStatus.NOT_FOUND),
     DUPLICATE_PRODUCT_CODE(2002, "Product code already exists", HttpStatus.BAD_REQUEST),
     INVALID_AMOUNT(2003, "Invalid amount provided", HttpStatus.BAD_REQUEST),
-    PRODUCT_OUT_OF_STOCK(2004, "Product out of stock", HttpStatus.BAD_REQUEST),
+    PRODUCT_OUT_OF_QUANTITY(2004, "Product out of quantity", HttpStatus.BAD_REQUEST),
     PRODUCT_PRICE_INVALID(2005, "Product price is invalid", HttpStatus.BAD_REQUEST),
 
     // 3000 Series - Cart Errors
@@ -31,10 +31,11 @@ public enum ErrorCode {
     CART_ITEM_NOT_FOUND(3002, "Cart item not found with Product ID: {id}", HttpStatus.NOT_FOUND),
     CART_ITEM_ALREADY_EXISTS(3003, "Cart item already exists with Product ID: {id}", HttpStatus.BAD_REQUEST),
     CART_EMPTY(3004, "Cart is empty", HttpStatus.BAD_REQUEST),
-
+    INVALID_PRODUCT_OPTION(3005, "Invalid product option", HttpStatus.BAD_REQUEST),
+    PRODUCT_VARIANT_NOT_FOUND(3006, "Product variant not found with ID: {id}", HttpStatus.NOT_FOUND),
+    OUT_OF_STOCK(3007, "Out of stock", HttpStatus.BAD_REQUEST),
     // 4000 Series - Category Errors
     CATEGORY_NOT_FOUND(4001, "Category not found with ID: {id}", HttpStatus.NOT_FOUND),
-
     // 5000 Series - Account Errors
     ACCOUNT_DISABLED(5001, "Account is disabled", HttpStatus.FORBIDDEN),
 
@@ -67,8 +68,12 @@ public enum ErrorCode {
         this.message = message;
         this.statusCode = statusCode;
     }
-
     public String getMessageWithParams(Object... params) {
-        return String.format(this.message, params);
+        String formattedMessage = this.message;
+        for (int i = 0; i < params.length; i++) {
+            formattedMessage = formattedMessage.replace("{" + i + "}", params[i].toString());
+        }
+        return formattedMessage;
     }
+
 }

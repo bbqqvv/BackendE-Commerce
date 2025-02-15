@@ -22,6 +22,7 @@ public class UserController {
     public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
         UserResponse userResponse = userService.createUser(request);
         return ApiResponse.<UserResponse>builder()
+                .message("User created successfully")
                 .data(userResponse)
                 .build();
     }
@@ -31,6 +32,7 @@ public class UserController {
     public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse userResponse = userService.getUserById(id);
         return ApiResponse.<UserResponse>builder()
+                .message("User retrieved successfully")
                 .data(userResponse)
                 .build();
     }
@@ -40,6 +42,7 @@ public class UserController {
     public ApiResponse<List<UserResponse>> getAllUsers() {
         List<UserResponse> userResponses = userService.getAllUsers();
         return ApiResponse.<List<UserResponse>>builder()
+                .message("User list retrieved successfully")
                 .data(userResponses)
                 .build();
     }
@@ -49,6 +52,7 @@ public class UserController {
     public ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody @Valid UserCreationRequest request) {
         UserResponse userResponse = userService.updateUser(id, request);
         return ApiResponse.<UserResponse>builder()
+                .message("User updated successfully")
                 .data(userResponse)
                 .build();
     }
@@ -58,7 +62,8 @@ public class UserController {
     public ApiResponse<String> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ApiResponse.<String>builder()
-                .data("User has been deleted")
+                .message("User has been deleted successfully")
+                .data("User deleted")
                 .build();
     }
 }

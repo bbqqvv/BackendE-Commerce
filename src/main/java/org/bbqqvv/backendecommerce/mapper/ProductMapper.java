@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 public interface ProductMapper {
     @Mapping(source = "mainImageUrl", target = "mainImage")
     Product toProduct(ProductRequest productRequest);
-
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "mainImage.imageUrl", target = "mainImageUrl")
     @Mapping(source = "slug", target = "slug")

@@ -26,15 +26,15 @@ public class AddressController {
                 .build();
     }
 
-    // Lấy danh sách tất cả các địa chỉ của người dùng theo userId
-    @GetMapping("/user/{userId}")
-    public ApiResponse<List<AddressResponse>> getAddressesByUserId(@PathVariable Long userId) {
+    // Lấy danh sách địa chỉ của chính người dùng (Lấy từ Token)
+    @GetMapping("/me")
+    public ApiResponse<List<AddressResponse>> getAddressesByUser() {
         return ApiResponse.<List<AddressResponse>>builder()
-                .data(addressService.getAddressesByUserId(userId))
+                .data(addressService.getAddressesByUser())
                 .build();
     }
 
-    // Lấy địa chỉ theo ID
+    // Lấy địa chỉ theo ID (Chỉ lấy được địa chỉ của chính mình)
     @GetMapping("/{id}")
     public ApiResponse<AddressResponse> getAddressById(@PathVariable Long id) {
         return ApiResponse.<AddressResponse>builder()
@@ -42,16 +42,16 @@ public class AddressController {
                 .build();
     }
 
-    // Cập nhật thông tin địa chỉ theo ID
-    @PutMapping("update/{id}")
+    // Cập nhật thông tin địa chỉ theo ID (Chỉ cập nhật địa chỉ của mình)
+    @PutMapping("/{id}")
     public ApiResponse<AddressResponse> updateAddress(@PathVariable Long id, @RequestBody @Valid AddressRequest addressRequest) {
         return ApiResponse.<AddressResponse>builder()
                 .data(addressService.updateAddress(id, addressRequest))
                 .build();
     }
 
-    // Xóa một địa chỉ theo ID
-    @DeleteMapping("delete/{id}")
+    // Xóa một địa chỉ theo ID (Chỉ xóa địa chỉ của mình)
+    @DeleteMapping("/{id}")
     public ApiResponse<String> deleteAddress(@PathVariable Long id) {
         addressService.deleteAddress(id);
         return ApiResponse.<String>builder()
@@ -59,12 +59,11 @@ public class AddressController {
                 .build();
     }
 
-    // Đặt địa chỉ mặc định
+    // Đặt địa chỉ mặc định (Chỉ đặt địa chỉ của mình)
     @PutMapping("/{id}/set-default")
     public ApiResponse<AddressResponse> setDefaultAddress(@PathVariable Long id) {
         return ApiResponse.<AddressResponse>builder()
                 .data(addressService.setDefaultAddress(id))
                 .build();
     }
-
 }

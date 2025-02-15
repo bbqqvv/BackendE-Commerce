@@ -11,7 +11,7 @@ public interface AddressService {
 
     AddressResponse updateAddress(Long addressId, AddressRequest addressRequest);
 
-    List<AddressResponse> getAddressesByUserId(Long userId);
+    List<AddressResponse> getAddressesByUser();
 
     AddressResponse getAddressById(Long addressId);
 

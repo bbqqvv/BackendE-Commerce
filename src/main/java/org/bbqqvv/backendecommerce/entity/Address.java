@@ -47,7 +47,7 @@ public class Address {
     private String phoneNumber;
 
     @Column(name = "is_default")
-    private boolean isDefault;
+    private boolean defaultAddress;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

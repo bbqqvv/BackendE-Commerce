@@ -22,6 +22,7 @@ public class Favourite {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
     @PrePersist

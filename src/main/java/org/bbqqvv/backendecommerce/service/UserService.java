@@ -17,7 +17,7 @@ public interface UserService {
 
     void deleteUser(Long id);
 
-    User getUserByUsernameEntity(String username);  // Phương thức mới để lấy User entity
+    User getUserByUsernameEntity(String username);
 
     boolean existsByUsername(String username);
 }

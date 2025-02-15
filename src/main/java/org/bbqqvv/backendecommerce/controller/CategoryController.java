@@ -22,6 +22,7 @@ public class CategoryController {
     @PostMapping
     public ApiResponse<CategoryResponse> createCategory(@ModelAttribute @Valid CategoryRequest categoryRequest) {
         return ApiResponse.<CategoryResponse>builder()
+                .message("Category created successfully")
                 .data(categoryService.createCategory(categoryRequest))
                 .build();
     }
@@ -30,6 +31,7 @@ public class CategoryController {
     @GetMapping
     public ApiResponse<List<CategoryResponse>> getAllCategories() {
         return ApiResponse.<List<CategoryResponse>>builder()
+                .message("List of categories retrieved successfully")
                 .data(categoryService.getAllCategories())
                 .build();
     }
@@ -38,6 +40,7 @@ public class CategoryController {
     @GetMapping("/{id}")
     public ApiResponse<CategoryResponse> getCategoryById(@PathVariable Long id) {
         return ApiResponse.<CategoryResponse>builder()
+                .message("Category details retrieved successfully")
                 .data(categoryService.getCategoryById(id))
                 .build();
     }
@@ -46,6 +49,7 @@ public class CategoryController {
     @PutMapping("/{id}")
     public ApiResponse<CategoryResponse> updateCategory(@PathVariable Long id, @ModelAttribute @Valid CategoryRequest categoryRequest) {
         return ApiResponse.<CategoryResponse>builder()
+                .message("Category updated successfully")
                 .data(categoryService.updateCategory(id, categoryRequest))
                 .build();
     }
@@ -55,7 +59,8 @@ public class CategoryController {
     public ApiResponse<String> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return ApiResponse.<String>builder()
-                .data("Category has been deleted")
+                .message("Category has been deleted successfully")
+                .data("Category deleted")
                 .build();
     }
 }

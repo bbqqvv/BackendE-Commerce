@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,10 +19,9 @@ public class ProductResponse {
     private String shortDescription;
     private String description;
     private String productCode;
-    private int stock;
-    private BigDecimal price;
     private boolean featured;
     private boolean sale;
+    private boolean active;
     private int salePercentage;
     private Long categoryId;
     private String mainImageUrl;

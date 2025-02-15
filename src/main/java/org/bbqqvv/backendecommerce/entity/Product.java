@@ -1,5 +1,8 @@
 package org.bbqqvv.backendecommerce.entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,38 +37,29 @@ public class Product {
     private String productCode;
 
     @Column(nullable = false)
-    private int stock;
-
-    @Column(nullable = false)
-    private BigDecimal price;
-
-    @Column(nullable = false)
+    @Min(0)
+    @Max(100)
     private int salePercentage;
 
     @Column(nullable = true)
+    @DecimalMin("0.0")
     private boolean featured;
 
     @Column(nullable = false)
-    private boolean active = true;
+    private boolean active;
 
     @Column(nullable = true)
-    private boolean sale;
-
-    @Column(nullable = true)
-    private BigDecimal priceAfterDiscount;
-
-    @Column(nullable = true)
-    private boolean isOldProduct;
+    private boolean isOldProduct = false;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
-    private ProductMainImage mainImage;
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<Favourite> favourites;
+
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
+    private ProductMainImage mainImage;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private List<ProductSecondaryImage> secondaryImages;
@@ -90,8 +84,5 @@ public class Product {
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
-    }
-    public boolean isSaleActive() {
-        return sale && salePercentage > 0;
     }
 }
