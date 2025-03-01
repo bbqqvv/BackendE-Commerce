@@ -3,6 +3,8 @@ package org.bbqqvv.backendecommerce.service.impl;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
+import org.bbqqvv.backendecommerce.dto.request.ChangePasswordRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.entity.User;
@@ -11,6 +13,7 @@ import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.UserMapper;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.UserService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,10 +26,13 @@ public class UserServiceImpl implements UserService {
 
     UserRepository userRepository;
     UserMapper userMapper;
+    PasswordEncoder passwordEncoder;  // Thêm PasswordEncoder
 
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -53,14 +59,14 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(user);
     }
 
+
+
     @Override
     public User getUserByUsernameEntity(String username) {
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            return null;
-        }
-        return userRepository.findByUsername(username);
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
+
     @Override
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
@@ -103,4 +109,29 @@ public class UserServiceImpl implements UserService {
         // Kiểm tra xem username đã tồn tại trong cơ sở dữ liệu chưa
         return userRepository.existsByUsername(username);
     }
+
+
+    @Override
+    public void changePassword(ChangePasswordRequest request) {
+        String username = SecurityUtils.getCurrentUserLogin()
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Kiểm tra mật khẩu cũ
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new AppException(ErrorCode.INVALID_OLD_PASSWORD);
+        }
+
+        // Kiểm tra mật khẩu mới và xác nhận mật khẩu có khớp nhau không
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORDS_DO_NOT_MATCH);
+        }
+
+        // Mã hóa mật khẩu mới
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
 }

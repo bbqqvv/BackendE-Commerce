@@ -113,8 +113,11 @@ public class AddressServiceImpl implements AddressService {
     private User getAuthenticatedUser() {
         String username = SecurityUtils.getCurrentUserLogin()
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
-        return userRepository.findByUsername(username);
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
+
 
     private Address findAddressByIdAndUser(Long addressId) {
         User user = getAuthenticatedUser();

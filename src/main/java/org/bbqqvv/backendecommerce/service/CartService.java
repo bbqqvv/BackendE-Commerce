@@ -19,6 +19,15 @@ public interface CartService {
      * Lấy giỏ hàng của người dùng hiện tại
      */
     CartResponse getCartByUserId();
+    /**
+     * Tăng số lượng sản phẩm trong giỏ hàng
+     */
+    CartResponse increaseProductQuantity(CartRequest cartRequest);
+
+    /**
+     * Giảm số lượng sản phẩm trong giỏ hàng
+     */
+    CartResponse decreaseProductQuantity(CartRequest cartRequest);
 
     /**
      * Xóa toàn bộ giỏ hàng

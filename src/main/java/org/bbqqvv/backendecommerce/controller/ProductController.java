@@ -23,6 +23,7 @@ public class ProductController {
     public ApiResponse<ProductResponse> createProduct(@ModelAttribute ProductRequest productRequest) {
         ProductResponse product = productService.createProduct(productRequest);
         return ApiResponse.<ProductResponse>builder()
+                .success(true)
                 .message("Product created successfully")
                 .data(product)
                 .build();
@@ -33,6 +34,7 @@ public class ProductController {
     public ApiResponse<ProductResponse> getProductById(@PathVariable Long id) {
         ProductResponse product = productService.getProductById(id);
         return ApiResponse.<ProductResponse>builder()
+                .success(true)
                 .message("Product retrieved successfully")
                 .data(product)
                 .build();
@@ -43,6 +45,7 @@ public class ProductController {
     public ApiResponse<ProductResponse> getProductBySlug(@PathVariable String slug) {
         ProductResponse product = productService.getProductBySlug(slug);
         return ApiResponse.<ProductResponse>builder()
+                .success(true)
                 .message("Product retrieved successfully")
                 .data(product)
                 .build();
@@ -53,6 +56,7 @@ public class ProductController {
     public ApiResponse<PageResponse<ProductResponse>> getAllProducts(@PageableDefault(size = 10) Pageable pageable) {
         PageResponse<ProductResponse> productPage = productService.getAllProducts(pageable);
         return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .success(true)
                 .message("Product list retrieved successfully")
                 .data(productPage)
                 .build();
@@ -65,6 +69,7 @@ public class ProductController {
             @PageableDefault(size = 10) Pageable pageable) {
         PageResponse<ProductResponse> productPage = productService.findProductByCategorySlug(slug, pageable);
         return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .success(true)
                 .message("Products retrieved by category successfully")
                 .data(productPage)
                 .build();
@@ -75,6 +80,7 @@ public class ProductController {
     public ApiResponse<ProductResponse> updateProduct(@PathVariable Long id, @ModelAttribute ProductRequest productRequest) {
         ProductResponse updatedProduct = productService.updateProduct(id, productRequest);
         return ApiResponse.<ProductResponse>builder()
+                .success(true)
                 .message("Product updated successfully")
                 .data(updatedProduct)
                 .build();
@@ -85,6 +91,7 @@ public class ProductController {
     public ApiResponse<String> deleteProduct(@PathVariable Long id) {
         boolean deleted = productService.deleteProduct(id);
         return ApiResponse.<String>builder()
+                .success(true)
                 .message(deleted ? "Product deleted successfully" : "Product not found")
                 .data(deleted ? "Deleted" : "Not found")
                 .build();

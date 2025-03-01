@@ -1,5 +1,6 @@
 package org.bbqqvv.backendecommerce.service;
 
+import org.bbqqvv.backendecommerce.dto.request.ChangePasswordRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.entity.User;
@@ -20,4 +21,6 @@ public interface UserService {
     User getUserByUsernameEntity(String username);
 
     boolean existsByUsername(String username);
+
+    void changePassword(ChangePasswordRequest request);
 }

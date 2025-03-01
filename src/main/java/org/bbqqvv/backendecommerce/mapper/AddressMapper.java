@@ -12,7 +12,6 @@ public interface AddressMapper {
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "defaultAddress", source = "defaultAddress") // ✅ Map từ isDefault -> defaultAddress
     AddressResponse toAddressResponse(Address address);
-
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromRequest(AddressRequest addressRequest, @MappingTarget Address existingAddress);
 }

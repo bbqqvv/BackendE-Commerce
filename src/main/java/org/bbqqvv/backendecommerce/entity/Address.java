@@ -26,6 +26,9 @@ public class Address {
     private User user;
 
     @Column
+    private String recipientName;
+
+    @Column
     private String country;
 
     @Column
@@ -36,6 +39,12 @@ public class Address {
 
     @Column
     private String district;
+
+    @Column
+    private String email;
+
+    @Column
+    private String note;
 
     @Column
     private String commune;

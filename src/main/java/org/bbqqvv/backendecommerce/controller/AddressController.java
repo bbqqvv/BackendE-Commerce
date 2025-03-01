@@ -22,6 +22,7 @@ public class AddressController {
     @PostMapping
     public ApiResponse<AddressResponse> createAddress(@RequestBody @Valid AddressRequest addressRequest) {
         return ApiResponse.<AddressResponse>builder()
+                .success(true)
                 .data(addressService.createAddress(addressRequest))
                 .build();
     }
@@ -30,6 +31,7 @@ public class AddressController {
     @GetMapping("/me")
     public ApiResponse<List<AddressResponse>> getAddressesByUser() {
         return ApiResponse.<List<AddressResponse>>builder()
+                .success(true)
                 .data(addressService.getAddressesByUser())
                 .build();
     }
@@ -38,6 +40,7 @@ public class AddressController {
     @GetMapping("/{id}")
     public ApiResponse<AddressResponse> getAddressById(@PathVariable Long id) {
         return ApiResponse.<AddressResponse>builder()
+                .success(true)
                 .data(addressService.getAddressById(id))
                 .build();
     }
@@ -55,6 +58,7 @@ public class AddressController {
     public ApiResponse<String> deleteAddress(@PathVariable Long id) {
         addressService.deleteAddress(id);
         return ApiResponse.<String>builder()
+                .success(true)
                 .data("Address has been deleted")
                 .build();
     }
@@ -63,6 +67,7 @@ public class AddressController {
     @PutMapping("/{id}/set-default")
     public ApiResponse<AddressResponse> setDefaultAddress(@PathVariable Long id) {
         return ApiResponse.<AddressResponse>builder()
+                .success(true)
                 .data(addressService.setDefaultAddress(id))
                 .build();
     }

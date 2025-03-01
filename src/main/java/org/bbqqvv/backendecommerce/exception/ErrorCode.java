@@ -18,6 +18,8 @@ public enum ErrorCode {
     USER_UNAUTHORIZED(1005, "User is not authorized", HttpStatus.UNAUTHORIZED),
     USER_ACCESS_DENIED(1006, "Access denied for user with ID: {id}", HttpStatus.FORBIDDEN),
     USER_EXISTED(1007, "User existed", HttpStatus.BAD_REQUEST),
+    PASSWORDS_DO_NOT_MATCH(400, "Passwords do not match",HttpStatus.BAD_REQUEST),
+    INVALID_OLD_PASSWORD(400, "Old password is incorrect", HttpStatus.BAD_REQUEST),
 
     // 2000 Series - Product Errors
     PRODUCT_NOT_FOUND(2001, "Product not found with ID: {id}", HttpStatus.NOT_FOUND),

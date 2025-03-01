@@ -10,6 +10,5 @@ import java.util.Optional;
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Long> {
     List<Address> findAllByUserId(Long userId);
-    List<Address> findDefaultAddressesByUserId(Long userId);
     Optional<Address> findByIdAndUserId(Long addressId, Long id);
 }

@@ -11,5 +11,5 @@ import java.util.List;
 @Repository
 public interface SizeCategoryRepository extends JpaRepository<SizeCategory, Long> {
     @Query("SELECT s.name FROM SizeCategory s WHERE s.category.id = :categoryId")
-    List<String> findSizesByCategory(@Param("categoryId") Long categoryId);
+    List<String> findSizeNamesByCategoryId(@Param("categoryId") Long categoryId);
 }

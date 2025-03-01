@@ -21,6 +21,7 @@ public class FavouriteController {
     public ApiResponse<FavouriteResponse> addFavourite(@RequestBody @Valid FavouriteRequest favouriteRequest) {
         FavouriteResponse favouriteResponse = favouriteService.addFavourite(favouriteRequest.getProductId());
         return ApiResponse.<FavouriteResponse>builder()
+                .success(true)
                 .data(favouriteResponse)
                 .message("Product added to favourites successfully.")
                 .build();
@@ -30,6 +31,7 @@ public class FavouriteController {
     public ApiResponse<String> removeFavourite(@PathVariable Long productId) {
         favouriteService.removeFavourite(productId);
         return ApiResponse.<String>builder()
+                .success(true)
                 .data("Favourite successfully removed.")
                 .message("The product has been removed from favourites.")
                 .build();
@@ -39,6 +41,7 @@ public class FavouriteController {
     public ApiResponse<List<FavouriteResponse>> getUserFavourites() {
         List<FavouriteResponse> favouriteResponses = favouriteService.getUserFavourites();
         return ApiResponse.<List<FavouriteResponse>>builder()
+                .success(true)
                 .data(favouriteResponses)
                 .message("List of user favourites retrieved successfully.")
                 .build();

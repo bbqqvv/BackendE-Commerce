@@ -41,10 +41,7 @@ public class FavouriteServiceImpl implements FavouriteService {
     @Override
     @Transactional
     public FavouriteResponse addFavourite(Long productId) {
-        String username = SecurityUtils.getCurrentUserLogin()
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        User user = userRepository.findByUsername(username);
+        User user = getAuthenticatedUser();
 
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
@@ -65,10 +62,7 @@ public class FavouriteServiceImpl implements FavouriteService {
     @Override
     @Transactional
     public FavouriteResponse removeFavourite(Long productId) {
-        String username = SecurityUtils.getCurrentUserLogin()
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        User user = userRepository.findByUsername(username);
+        User user = getAuthenticatedUser();
 
         Favourite existingFavourite = favouriteRepository.findByUserIdAndProductId(user.getId(), productId)
                 .orElseThrow(() -> new AppException(ErrorCode.REMOVE_FAVOURITE_NOT_FOUND));
@@ -85,15 +79,20 @@ public class FavouriteServiceImpl implements FavouriteService {
 
     @Override
     public List<FavouriteResponse> getUserFavourites() {
-        String username = SecurityUtils.getCurrentUserLogin()
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        User user = userRepository.findByUsername(username);
+        User user = getAuthenticatedUser();
 
         List<Favourite> favourites = favouriteRepository.findByUserId(user.getId());
 
         return favourites.stream()
                 .map(favouriteMapper::toFavouriteResponse)
                 .collect(Collectors.toList());
+    }
+
+    private User getAuthenticatedUser() {
+        String username = SecurityUtils.getCurrentUserLogin()
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 }

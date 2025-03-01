@@ -20,6 +20,7 @@ public class CartController {
     @PostMapping("/add-or-update")
     public ApiResponse<CartResponse> addOrUpdateProductInCart(@RequestBody @Valid CartRequest cartRequest) {
         return ApiResponse.<CartResponse>builder()
+                .success(true)
                 .data(cartService.addOrUpdateProductInCart(cartRequest))
                 .message("Cart updated successfully")
                 .build();
@@ -35,6 +36,7 @@ public class CartController {
             @RequestParam String color) {
 
         return ApiResponse.<CartResponse>builder()
+                .success(true)
                 .data(cartService.removeProductFromCart(productId, sizeName, color))
                 .message("Product removed from cart")
                 .build();
@@ -46,8 +48,32 @@ public class CartController {
     @GetMapping
     public ApiResponse<CartResponse> getCartByUser() {
         return ApiResponse.<CartResponse>builder()
+                .success(true)
                 .data(cartService.getCartByUserId())
                 .message("Cart retrieved successfully")
+                .build();
+    }
+    /**
+     * Tăng số lượng sản phẩm trong giỏ hàng
+     */
+    @PostMapping("/increase")
+    public ApiResponse<CartResponse> increaseProductQuantity(@RequestBody @Valid CartRequest cartRequest) {
+        return ApiResponse.<CartResponse>builder()
+                .success(true)
+                .data(cartService.increaseProductQuantity(cartRequest))
+                .message("Product quantity increased")
+                .build();
+    }
+
+    /**
+     * Giảm số lượng sản phẩm trong giỏ hàng
+     */
+    @PostMapping("/decrease")
+    public ApiResponse<CartResponse> decreaseProductQuantity(@RequestBody @Valid CartRequest cartRequest) {
+        return ApiResponse.<CartResponse>builder()
+                .success(true)
+                .data(cartService.decreaseProductQuantity(cartRequest))
+                .message("Product quantity decreased")
                 .build();
     }
 
@@ -58,6 +84,7 @@ public class CartController {
     public ApiResponse<String> clearCart() {
         cartService.clearCart();
         return ApiResponse.<String>builder()
+                .success(true)
                 .data("Cart cleared successfully")
                 .message("Cart has been emptied")
                 .build();

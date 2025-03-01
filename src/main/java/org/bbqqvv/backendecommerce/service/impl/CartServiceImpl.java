@@ -68,7 +68,7 @@ public class CartServiceImpl implements CartService {
 
             validateSizeOption(product, itemRequest.getSizeName());
 
-            SizeProduct sizeProduct = sizeProductRepository.findByProductVariantSizes_ProductVariant_Product_IdAndSizeName(
+            SizeProduct sizeProduct = sizeProductRepository.findByProductIdAndSizeName(
                             product.getId(), itemRequest.getSizeName())
                     .orElseThrow(() -> new AppException(ErrorCode.INVALID_PRODUCT_OPTION));
 
@@ -102,7 +102,9 @@ public class CartServiceImpl implements CartService {
                         .subtotal(BigDecimal.ZERO) // Cập nhật sau
                         .inStock(isInStock)
                         .build();
+
                 cart.getCartItems().add(newCartItem);
+
                 return newCartItem;
             }).setQuantity(existingQuantity + itemRequest.getQuantity());
 
@@ -139,7 +141,7 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
         cart.getCartItems().forEach(cartItem -> {
-            sizeProductRepository.findByProductVariantSizes_ProductVariant_Product_IdAndSizeName(
+            sizeProductRepository.findByProductIdAndSizeName(
                     cartItem.getProduct().getId(), cartItem.getSizeName()
             ).ifPresent(sizeProduct -> {
                 int stockQuantity = sizeProduct.getProductVariantSizes().stream()
@@ -154,6 +156,64 @@ public class CartServiceImpl implements CartService {
 
         return cartMapper.toCartResponse(cart);
     }
+
+    @Override
+    @Transactional
+    public CartResponse increaseProductQuantity(CartRequest cartRequest) {
+        User user = getAuthenticatedUser();
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
+
+        for (var itemRequest : cartRequest.getItems()) {
+            CartItem cartItem = cartItemRepository.findByCartIdAndProductIdAndSizeNameAndColor(
+                            cart.getId(), itemRequest.getProductId(), itemRequest.getSizeName(), itemRequest.getColor())
+                    .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_FOUND));
+
+            SizeProduct sizeProduct = sizeProductRepository.findByProductIdAndSizeName(
+                            cartItem.getProduct().getId(), cartItem.getSizeName())
+                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_PRODUCT_OPTION));
+
+            // Kiểm tra tồn kho
+            if (cartItem.getQuantity() + 1 > sizeProduct.getStockQuantity()) {
+                throw new AppException(ErrorCode.OUT_OF_STOCK);
+            }
+
+            cartItem.setQuantity(cartItem.getQuantity() + 1);
+            cartItem.setSubtotal(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            cartItemRepository.save(cartItem);
+        }
+
+        updateCartTotal(cart);
+        return cartMapper.toCartResponse(cart);
+    }
+
+    @Override
+    @Transactional
+    public CartResponse decreaseProductQuantity(CartRequest cartRequest) {
+        User user = getAuthenticatedUser();
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
+
+        for (var itemRequest : cartRequest.getItems()) {
+            CartItem cartItem = cartItemRepository.findByCartIdAndProductIdAndSizeNameAndColor(
+                            cart.getId(), itemRequest.getProductId(), itemRequest.getSizeName(), itemRequest.getColor())
+                    .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_FOUND));
+
+            // Nếu số lượng còn 1 thì xóa luôn sản phẩm khỏi giỏ hàng
+            if (cartItem.getQuantity() == 1) {
+                cart.getCartItems().remove(cartItem);
+                cartItemRepository.delete(cartItem);
+            } else {
+                cartItem.setQuantity(cartItem.getQuantity() - 1);
+                cartItem.setSubtotal(cartItem.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+                cartItemRepository.save(cartItem);
+            }
+        }
+
+        updateCartTotal(cart);
+        return cartMapper.toCartResponse(cart);
+    }
+
 
     @Override
     @Transactional
@@ -181,15 +241,24 @@ public class CartServiceImpl implements CartService {
     private User getAuthenticatedUser() {
         String username = SecurityUtils.getCurrentUserLogin()
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
-        return userRepository.findByUsername(username);
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void validateSizeOption(Product product, String sizeName) {
-        List<String> validSizes = sizeCategoryRepository.findSizesByCategory(product.getCategory().getId());
+        List<String> validSizes = sizeCategoryRepository.findSizeNamesByCategoryId(product.getCategory().getId());
+        System.out.println("📌 Danh sách size hợp lệ: " + validSizes);
+        System.out.println("📌 Kiểm tra size: " + sizeName);
+
         if (!validSizes.contains(sizeName)) {
+            System.out.println("❌ Size không hợp lệ: " + sizeName);
             throw new AppException(ErrorCode.INVALID_PRODUCT_OPTION);
         }
+
+        System.out.println("✅ Size hợp lệ: " + sizeName);
     }
+
 
     private String generateKey(Long productId, String sizeName, String color) {
         return productId + "-" + sizeName + "-" + color;
