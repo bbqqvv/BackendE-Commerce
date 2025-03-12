@@ -3,6 +3,8 @@ package org.bbqqvv.backendecommerce.service;
 import org.bbqqvv.backendecommerce.dto.request.CartRequest;
 import org.bbqqvv.backendecommerce.dto.response.CartResponse;
 
+import java.math.BigDecimal;
+
 public interface CartService {
 
     /**
@@ -33,4 +35,6 @@ public interface CartService {
      * Xóa toàn bộ giỏ hàng
      */
     void clearCart();
+
+    BigDecimal getTotalCartAmount(Long cartId);
 }

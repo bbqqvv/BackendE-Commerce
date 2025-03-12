@@ -14,7 +14,6 @@ import org.bbqqvv.backendecommerce.mapper.CategoryMapper;
 import org.bbqqvv.backendecommerce.mapper.SizeMapper;
 import org.bbqqvv.backendecommerce.repository.CategoryRepository;
 import org.bbqqvv.backendecommerce.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,7 +31,6 @@ public class CategoryServiceImpl implements CategoryService {
     SizeMapper sizeMapper;
     ImgBBConfig imgBBConfig;
 
-    @Autowired
     public CategoryServiceImpl(CategoryRepository categoryRepository, ImgBBConfig imgBBConfig, CategoryMapper categoryMapper, SizeMapper sizeMapper) {
         this.categoryRepository = categoryRepository;
         this.imgBBConfig = imgBBConfig;
@@ -75,19 +73,17 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryResponse getCategoryById(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND)); // Dùng AppException với ErrorCode
-        return categoryMapper.categoryToCategoryResponse(category);
+        return categoryRepository.findById(id)
+                .map(categoryMapper::categoryToCategoryResponse)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
     @Override
     public List<CategoryResponse> getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
-        return categories.stream()
+        return categoryRepository.findAll().stream()
                 .map(categoryMapper::categoryToCategoryResponse)
                 .collect(Collectors.toList());
     }
-
     @Override
     public CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest) {
         try {
@@ -130,7 +126,12 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.delete(category);
         return true;
     }
-
+    private List<SizeCategory> mapSizeCategories(CategoryRequest categoryRequest, Category category) {
+        return categoryRequest.getSizes() == null ? List.of() : categoryRequest.getSizes().stream()
+                .map(sizeMapper::toSize)
+                .peek(size -> size.setCategory(category))
+                .collect(Collectors.toList());
+    }
     private String handleImageUpload(MultipartFile image) throws IOException {
         if (image != null && !image.isEmpty()) {
             return imgBBConfig.uploadImage(image);

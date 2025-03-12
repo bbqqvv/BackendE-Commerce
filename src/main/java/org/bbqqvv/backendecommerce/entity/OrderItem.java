@@ -32,4 +32,12 @@ public class OrderItem {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private BigDecimal subtotal;
+
+    @Column(nullable = false)
+    private String color;
+
+    @Column(nullable = false)
+    private String sizeName;
 }

@@ -47,14 +47,13 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartResponse addOrUpdateProductInCart(CartRequest cartRequest) {
         User user = getAuthenticatedUser();
-        Cart cart = cartRepository.findByUserId(user.getId()).orElseGet(() -> {
-            Cart newCart = Cart.builder()
-                    .user(user)
-                    .totalPrice(BigDecimal.ZERO)
-                    .cartItems(new ArrayList<>())
-                    .build();
-            return cartRepository.save(newCart);
-        });
+        Cart cart = cartRepository.findByUserId(user.getId()).orElseGet(() ->
+                cartRepository.save(Cart.builder()
+                        .user(user)
+                        .totalPrice(BigDecimal.ZERO)
+                        .cartItems(new ArrayList<>())
+                        .build())
+        );
 
         Map<String, CartItem> cartItemMap = cart.getCartItems().stream()
                 .collect(Collectors.toMap(
@@ -62,7 +61,7 @@ public class CartServiceImpl implements CartService {
                         item -> item
                 ));
 
-        for (var itemRequest : cartRequest.getItems()) {
+        cartRequest.getItems().forEach(itemRequest -> {
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
@@ -72,16 +71,13 @@ public class CartServiceImpl implements CartService {
                             product.getId(), itemRequest.getSizeName())
                     .orElseThrow(() -> new AppException(ErrorCode.INVALID_PRODUCT_OPTION));
 
-            ProductVariant productVariant = sizeProduct.getProductVariantSizes()
-                    .stream()
+            ProductVariant productVariant = sizeProduct.getProductVariantSizes().stream()
                     .map(SizeProductVariant::getProductVariant)
                     .findFirst()
                     .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_VARIANT_NOT_FOUND));
 
-            // Kiểm tra tổng số lượng trong giỏ hàng sau khi thêm
             String key = generateKey(itemRequest.getProductId(), itemRequest.getSizeName(), itemRequest.getColor());
-            int existingQuantity = cartItemMap.getOrDefault(key, new CartItem()).getQuantity();
-            int newTotalQuantity = existingQuantity + itemRequest.getQuantity();
+            int newTotalQuantity = cartItemMap.getOrDefault(key, new CartItem()).getQuantity() + itemRequest.getQuantity();
 
             if (newTotalQuantity > sizeProduct.getStockQuantity()) {
                 throw new AppException(ErrorCode.OUT_OF_STOCK);
@@ -95,25 +91,24 @@ public class CartServiceImpl implements CartService {
                         .cart(cart)
                         .product(product)
                         .productVariant(productVariant)
-                        .quantity(0) // Sẽ cập nhật lại ngay sau đây
+                        .quantity(0) // Sẽ cập nhật ngay sau đây
                         .sizeName(itemRequest.getSizeName())
                         .color(itemRequest.getColor())
                         .price(price)
-                        .subtotal(BigDecimal.ZERO) // Cập nhật sau
+                        .subtotal(BigDecimal.ZERO)
                         .inStock(isInStock)
                         .build();
-
                 cart.getCartItems().add(newCartItem);
-
                 return newCartItem;
-            }).setQuantity(existingQuantity + itemRequest.getQuantity());
+            }).setQuantity(newTotalQuantity);
 
-            cartItemMap.get(key).setSubtotal(price.multiply(BigDecimal.valueOf(cartItemMap.get(key).getQuantity())));
-        }
+            cartItemMap.get(key).setSubtotal(price.multiply(BigDecimal.valueOf(newTotalQuantity)));
+        });
 
         updateCartTotal(cart);
         return cartMapper.toCartResponse(cart);
     }
+
 
     @Override
     @Transactional
@@ -122,8 +117,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
-        CartItem cartItem = cartItemRepository.findByCartIdAndProductIdAndSizeNameAndColor(
-                        cart.getId(), productId, sizeName, color)
+        CartItem cartItem = cartItemRepository.findByCartIdAndProductIdAndSizeNameAndColor(cart.getId(), productId, sizeName, color)
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_FOUND));
 
         cart.getCartItems().remove(cartItem);
@@ -140,19 +134,13 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
-        cart.getCartItems().forEach(cartItem -> {
-            sizeProductRepository.findByProductIdAndSizeName(
-                    cartItem.getProduct().getId(), cartItem.getSizeName()
-            ).ifPresent(sizeProduct -> {
-                int stockQuantity = sizeProduct.getProductVariantSizes().stream()
-                        .filter(variant -> variant.getProductVariant().equals(cartItem.getProductVariant()))
-                        .map(SizeProductVariant::getStock)
-                        .findFirst()
-                        .orElse(0);
-
-                cartItem.setInStock(stockQuantity >= cartItem.getQuantity());
-            });
-        });
+        cart.getCartItems().forEach(cartItem -> sizeProductRepository.findByProductIdAndSizeName(cartItem.getProduct().getId(), cartItem.getSizeName())
+                .ifPresent(sizeProduct -> cartItem.setInStock(
+                        sizeProduct.getProductVariantSizes().stream()
+                                .map(SizeProductVariant::getStock)
+                                .findFirst()
+                                .orElse(0) >= cartItem.getQuantity()
+                )));
 
         return cartMapper.toCartResponse(cart);
     }
@@ -227,6 +215,14 @@ public class CartServiceImpl implements CartService {
         cartRepository.save(cart);
     }
 
+    @Override
+    public BigDecimal getTotalCartAmount(Long cartId) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
+
+        return cart.getTotalPrice();
+    }
+
     private void updateCartTotal(Cart cart) {
         BigDecimal newTotal = cart.getCartItems().stream()
                 .map(CartItem::getSubtotal)
@@ -258,8 +254,6 @@ public class CartServiceImpl implements CartService {
 
         System.out.println("✅ Size hợp lệ: " + sizeName);
     }
-
-
     private String generateKey(Long productId, String sizeName, String color) {
         return productId + "-" + sizeName + "-" + color;
     }

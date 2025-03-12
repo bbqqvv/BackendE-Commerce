@@ -3,7 +3,6 @@ package org.bbqqvv.backendecommerce.dto.request;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -13,5 +12,8 @@ import java.math.BigDecimal;
 public class OrderItemRequest {
     private Long productId;
     private Integer quantity;
-    private BigDecimal price;
+    private String color;
+    private String sizeName;
 }
+
+

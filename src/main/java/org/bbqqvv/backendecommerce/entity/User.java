@@ -77,4 +77,8 @@ public class User {
         this.email = email;
         this.authorities = Set.of(role);
     }
+
+    public boolean isAdmin() {
+        return authorities.contains(Role.ROLE_ADMIN);
+    }
 }

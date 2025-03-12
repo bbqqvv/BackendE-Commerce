@@ -23,17 +23,14 @@ public interface ProductMapper {
     @Mapping(source = "secondaryImages", target = "secondaryImageUrls", qualifiedByName = "mapSecondaryImageUrls")
     @Mapping(source = "descriptionImages", target = "descriptionImageUrls", qualifiedByName = "mapDescriptionImageUrls")
     ProductResponse toProductResponse(Product product);
-
     @Named("mapSecondaryImageUrls")
     default List<String> mapSecondaryImageUrls(List<ProductSecondaryImage> images) {
         return mapImageUrls(images);
     }
-
     @Named("mapDescriptionImageUrls")
     default List<String> mapDescriptionImageUrls(List<ProductDescriptionImage> images) {
         return mapImageUrls(images);
     }
-
     default List<String> mapImageUrls(List<? extends ProductImage> images) {
         return images == null ? null : images.stream()
                 .map(ProductImage::getImageUrl)

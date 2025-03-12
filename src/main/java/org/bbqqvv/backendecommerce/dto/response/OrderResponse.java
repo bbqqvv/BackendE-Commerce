@@ -1,16 +1,33 @@
 package org.bbqqvv.backendecommerce.dto.response;
 
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.bbqqvv.backendecommerce.entity.PaymentMethod;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderResponse {
-    private Long orderId;
+    private Long id;
+    private Long userId;
     private String userName;
     private String address;
-    private BigDecimal totalAmount;
+    private String notes;
     private String status;
+    private PaymentMethod paymentMethod;
+    private BigDecimal shippingFee;
+    private String discountCode;
+    private BigDecimal discountAmount;
+    private LocalDate expectedDeliveryDate;
+    private List<OrderItemResponse> items;
+    private BigDecimal totalAmount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<OrderItemResponse> items;
 }

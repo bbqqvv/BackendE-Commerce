@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -39,7 +38,6 @@ public class AddressServiceImpl implements AddressService {
     @Transactional
     public AddressResponse createAddress(AddressRequest addressRequest) {
         User user = getAuthenticatedUser();
-
         Address address = addressMapper.toAddress(addressRequest);
         address.setUser(user);
 
@@ -49,15 +47,13 @@ public class AddressServiceImpl implements AddressService {
             address.setDefaultAddress(true);
         }
 
-        Address savedAddress = addressRepository.save(address);
-        return addressMapper.toAddressResponse(savedAddress);
+        return addressMapper.toAddressResponse(addressRepository.save(address));
     }
 
     @Override
     @Transactional
     public AddressResponse updateAddress(Long addressId, AddressRequest addressRequest) {
         Address existingAddress = findAddressByIdAndUser(addressId);
-
         addressMapper.updateEntityFromRequest(addressRequest, existingAddress);
 
         if (addressRequest.isDefaultAddress() && !existingAddress.isDefaultAddress()) {
@@ -65,28 +61,20 @@ public class AddressServiceImpl implements AddressService {
             existingAddress.setDefaultAddress(true);
         }
 
-        Address updatedAddress = addressRepository.save(existingAddress);
-        return addressMapper.toAddressResponse(updatedAddress);
+        return addressMapper.toAddressResponse(addressRepository.save(existingAddress));
     }
 
     @Override
     public List<AddressResponse> getAddressesByUser() {
         User user = getAuthenticatedUser();
-        List<Address> addresses = addressRepository.findAllByUserId(user.getId());
-
-        if (addresses.isEmpty()) {
-            throw new AppException(ErrorCode.ADDRESS_NOT_FOUND);
-        }
-
-        return addresses.stream()
+        return addressRepository.findAllByUserId(user.getId()).stream()
                 .map(addressMapper::toAddressResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public AddressResponse getAddressById(Long addressId) {
-        Address address = findAddressByIdAndUser(addressId);
-        return addressMapper.toAddressResponse(address);
+        return addressMapper.toAddressResponse(findAddressByIdAndUser(addressId));
     }
 
     @Override
@@ -98,26 +86,24 @@ public class AddressServiceImpl implements AddressService {
             throw new AppException(ErrorCode.ADDRESS_DEFAULT_CANNOT_DELETE);
         }
 
-        addressRepository.deleteById(addressId);
+        addressRepository.delete(address);
     }
+
+
 
     @Override
     @Transactional
     public AddressResponse setDefaultAddress(Long addressId) {
         Address address = findAddressByIdAndUser(addressId);
         setDefaultAddressForUser(address.getUser(), addressId);
-        Address updatedAddress = addressRepository.save(address);
-        return addressMapper.toAddressResponse(updatedAddress);
+        return addressMapper.toAddressResponse(addressRepository.save(address));
     }
 
     private User getAuthenticatedUser() {
-        String username = SecurityUtils.getCurrentUserLogin()
+        return SecurityUtils.getCurrentUserLogin()
+                .flatMap(userRepository::findByUsername)
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
-
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
-
 
     private Address findAddressByIdAndUser(Long addressId) {
         User user = getAuthenticatedUser();
@@ -127,14 +113,9 @@ public class AddressServiceImpl implements AddressService {
 
     private void setDefaultAddressForUser(User user, Long newDefaultAddressId) {
         List<Address> userAddresses = addressRepository.findAllByUserId(user.getId());
-        for (Address addr : userAddresses) {
-            if (addr.getId().equals(newDefaultAddressId)) {
-                addr.setDefaultAddress(true);
-            } else {
-                addr.setDefaultAddress(false);
-            }
-            addressRepository.save(addr);
-        }
-    }
 
+        userAddresses.forEach(addr -> addr.setDefaultAddress(addr.getId().equals(newDefaultAddressId)));
+
+        addressRepository.saveAll(userAddresses);
+    }
 }

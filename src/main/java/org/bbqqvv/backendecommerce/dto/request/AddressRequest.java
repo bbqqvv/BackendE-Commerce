@@ -18,4 +18,5 @@ public class AddressRequest {
     private String email;
     private String phoneNumber;
     private boolean defaultAddress;
+
 }

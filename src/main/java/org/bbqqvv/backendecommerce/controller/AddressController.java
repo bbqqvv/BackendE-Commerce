@@ -49,6 +49,7 @@ public class AddressController {
     @PutMapping("/{id}")
     public ApiResponse<AddressResponse> updateAddress(@PathVariable Long id, @RequestBody @Valid AddressRequest addressRequest) {
         return ApiResponse.<AddressResponse>builder()
+                .success(true)
                 .data(addressService.updateAddress(id, addressRequest))
                 .build();
     }

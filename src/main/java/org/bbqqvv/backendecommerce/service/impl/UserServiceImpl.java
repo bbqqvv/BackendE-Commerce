@@ -13,6 +13,7 @@ import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.UserMapper;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.UserService;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -50,9 +51,9 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(savedUser);
     }
 
+    @Cacheable(value = "users", key = "#id")
     @Override
     public UserResponse getUserById(Long id) {
-        // Kiểm tra người dùng có tồn tại không
         User user = userRepository.findById(id).orElseThrow(() ->
                 new AppException(ErrorCode.USER_NOT_FOUND)
         );
@@ -67,6 +68,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
+    @Cacheable(value = "users", key = "'allUsers'")
     @Override
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
@@ -74,6 +76,7 @@ public class UserServiceImpl implements UserService {
                 .map(userMapper::toUserResponse)
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public UserResponse updateUser(Long id, UserCreationRequest request) {
@@ -93,6 +96,10 @@ public class UserServiceImpl implements UserService {
         // Map User entity -> UserResponse
         return userMapper.toUserResponse(updatedUser);
     }
+
+
+
+
     @Override
     public void deleteUser(Long id) {
         // Kiểm tra người dùng có tồn tại không trước khi xóa

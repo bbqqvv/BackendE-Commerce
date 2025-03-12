@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "addresses")
@@ -33,9 +32,6 @@ public class Address {
 
     @Column
     private String province;
-
-    @OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders;
 
     @Column
     private String district;
@@ -74,4 +70,16 @@ public class Address {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public String getFullAddress() {
+        return String.format("%s, %s, %s, %s, %s",
+                addressLine != null ? addressLine : "",
+                commune != null ? commune : "",
+                district != null ? district : "",
+                province != null ? province : "",
+                country != null ? country : "");
+    }
+
+
+
 }

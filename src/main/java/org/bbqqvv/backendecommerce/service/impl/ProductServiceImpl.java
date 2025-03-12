@@ -5,8 +5,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
-import org.bbqqvv.backendecommerce.dto.request.ProductVariantRequest;
-import org.bbqqvv.backendecommerce.dto.request.SizeProductRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.bbqqvv.backendecommerce.entity.*;
 import org.bbqqvv.backendecommerce.exception.AppException;
@@ -20,14 +18,17 @@ import org.bbqqvv.backendecommerce.repository.SizeProductRepository;
 import org.bbqqvv.backendecommerce.service.ProductService;
 import org.bbqqvv.backendecommerce.service.img.FileStorageService;
 import org.bbqqvv.backendecommerce.util.SlugUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,8 +40,6 @@ public class ProductServiceImpl implements ProductService {
     CategoryRepository categoryRepository;
     SizeProductRepository sizeProductRepository;
     ProductMapper productMapper;
-    VariantMapper variantMapper;
-    SizeProductMapper sizeProductMapper;
     FileStorageService fileStorageService;
 
     public ProductServiceImpl(ProductRepository productRepository,
@@ -53,10 +52,8 @@ public class ProductServiceImpl implements ProductService {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productMapper = productMapper;
-        this.variantMapper = variantMapper;
         this.fileStorageService = fileStorageService;
         this.sizeProductRepository = sizeProductRepository;
-        this.sizeProductMapper = sizeProductMapper;
     }
 
     @Override
@@ -76,12 +73,13 @@ public class ProductServiceImpl implements ProductService {
         return toFullProductResponse(savedProduct);
     }
 
-    @Override
+    @Cacheable(value = "products", key = "#id")
     public ProductResponse getProductById(Long id) {
         return productRepository.findById(id)
                 .map(this::toFullProductResponse)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
     }
+
 
     @Override
     public PageResponse<ProductResponse> getAllProducts(Pageable pageable) {
@@ -108,6 +106,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products", key = "#id")
     public ProductResponse updateProduct(Long id, ProductRequest productRequest) {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
@@ -150,43 +149,43 @@ public class ProductServiceImpl implements ProductService {
         handleImageUrls(product, productRequest);
 
         if (productRequest.getVariants() != null) {
-            List<ProductVariant> variants = new ArrayList<>();
-            for (ProductVariantRequest variantRequest : productRequest.getVariants()) {
+            List<ProductVariant> variants = productRequest.getVariants().stream().map(variantRequest -> {
                 ProductVariant variant = new ProductVariant();
                 variant.setColor(variantRequest.getColor());
                 variant.setProduct(product);
 
                 // Upload hình ảnh cho variant
-                if (variantRequest.getImageUrl() != null) {
-                    String imageUrl = fileStorageService.storeImage(variantRequest.getImageUrl());
-                    variant.setImageUrl(imageUrl);
-                }
+                Optional.ofNullable(variantRequest.getImageUrl())
+                        .map(fileStorageService::storeImage)
+                        .ifPresent(variant::setImageUrl);
 
                 // Xử lý các kích thước cho từng variant
-                if (variantRequest.getSizes() != null) {
-                    List<SizeProductVariant> sizeVariants = new ArrayList<>();
-                    for (SizeProductRequest sizeRequest : variantRequest.getSizes()) {
-                        SizeProduct sizeProduct = sizeProductRepository.findBySizeName(sizeRequest.getSizeName())
-                                .orElseGet(() -> {
-                                    SizeProduct newSize = new SizeProduct();
-                                    newSize.setSizeName(sizeRequest.getSizeName());
-                                    newSize.setPrice(sizeRequest.getPrice());
-                                    BigDecimal priceAfterDiscount = calculatePriceAfterDiscount(
-                                            sizeRequest.getPrice(), productRequest.getSalePercentage());
-                                    newSize.setPriceAfterDiscount(priceAfterDiscount);
-                                    return sizeProductRepository.save(newSize);
-                                });
+                List<SizeProductVariant> sizeVariants = Optional.ofNullable(variantRequest.getSizes())
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .map(sizeRequest -> {
+                            SizeProduct sizeProduct = sizeProductRepository.findBySizeName(sizeRequest.getSizeName())
+                                    .orElseGet(() -> {
+                                        SizeProduct newSize = new SizeProduct();
+                                        newSize.setSizeName(sizeRequest.getSizeName());
+                                        newSize.setPrice(sizeRequest.getPrice());
+                                        newSize.setPriceAfterDiscount(calculatePriceAfterDiscount(
+                                                sizeRequest.getPrice(), productRequest.getSalePercentage()));
+                                        return sizeProductRepository.save(newSize);
+                                    });
 
-                        SizeProductVariant sizeVariant = new SizeProductVariant();
-                        sizeVariant.setSizeProduct(sizeProduct);
-                        sizeVariant.setProductVariant(variant);
-                        sizeVariant.setStock(sizeRequest.getStock());
-                        sizeVariants.add(sizeVariant);
-                    }
-                    variant.setProductVariantSizes(sizeVariants);
-                }
-                variants.add(variant);
-            }
+                            SizeProductVariant sizeVariant = new SizeProductVariant();
+                            sizeVariant.setSizeProduct(sizeProduct);
+                            sizeVariant.setProductVariant(variant);
+                            sizeVariant.setStock(sizeRequest.getStock());
+                            return sizeVariant;
+                        })
+                        .collect(Collectors.toList());
+
+                variant.setProductVariantSizes(sizeVariants);
+                return variant;
+            }).collect(Collectors.toList());
+
             product.setVariants(variants);
         }
 
@@ -195,41 +194,33 @@ public class ProductServiceImpl implements ProductService {
 
     private void handleImageUrls(Product product, ProductRequest productRequest) {
         try {
-            if (productRequest.getMainImageUrl() != null) {
-                String mainImage = fileStorageService.storeImage(productRequest.getMainImageUrl());
-                if (mainImage != null) {
-                    product.setMainImage(ProductMainImage.builder()
-                            .imageUrl(mainImage)
+            Optional.ofNullable(productRequest.getMainImageUrl())
+                    .map(fileStorageService::storeImage)
+                    .ifPresent(imageUrl -> product.setMainImage(ProductMainImage.builder()
+                            .imageUrl(imageUrl)
                             .product(product)
-                            .build());
-                }
-            }
-            if (productRequest.getSecondaryImageUrls() != null && !productRequest.getSecondaryImageUrls().isEmpty()) {
-                List<String> secondaryImages = fileStorageService.storeImages(productRequest.getSecondaryImageUrls());
-                if (!secondaryImages.isEmpty()) {
-                    product.setSecondaryImages(
-                            secondaryImages.stream()
-                                    .map(url -> ProductSecondaryImage.builder()
-                                            .imageUrl(url)
-                                            .product(product)
-                                            .build())
-                                    .collect(Collectors.toList())
-                    );
-                }
-            }
-            if (productRequest.getDescriptionImageUrls() != null && !productRequest.getDescriptionImageUrls().isEmpty()) {
-                List<String> descriptionImages = fileStorageService.storeImages(productRequest.getDescriptionImageUrls());
-                if (!descriptionImages.isEmpty()) {
-                    product.setDescriptionImages(
-                            descriptionImages.stream()
-                                    .map(url -> ProductDescriptionImage.builder()
-                                            .imageUrl(url)
-                                            .product(product)
-                                            .build())
-                                    .collect(Collectors.toList())
-                    );
-                }
-            }
+                            .build()));
+
+            Optional.ofNullable(productRequest.getSecondaryImageUrls())
+                    .filter(urls -> !urls.isEmpty())
+                    .map(fileStorageService::storeImages)
+                    .ifPresent(images -> product.setSecondaryImages(images.stream()
+                            .map(url -> ProductSecondaryImage.builder()
+                                    .imageUrl(url)
+                                    .product(product)
+                                    .build())
+                            .collect(Collectors.toList())));
+
+            Optional.ofNullable(productRequest.getDescriptionImageUrls())
+                    .filter(urls -> !urls.isEmpty())
+                    .map(fileStorageService::storeImages)
+                    .ifPresent(images -> product.setDescriptionImages(images.stream()
+                            .map(url -> ProductDescriptionImage.builder()
+                                    .imageUrl(url)
+                                    .product(product)
+                                    .build())
+                            .collect(Collectors.toList())));
+
         } catch (Exception e) {
             throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
@@ -241,12 +232,12 @@ public class ProductServiceImpl implements ProductService {
         int counter = 1;
 
         while (productRepository.existsBySlug(slug)) {
-            slug = baseSlug + "-" + counter;
-            counter++;
+            slug = String.format("%s-%d", baseSlug, counter++);
         }
 
         return slug;
     }
+
 
     private BigDecimal calculatePriceAfterDiscount(BigDecimal price, int salePercentage) {
         if (price != null && salePercentage > 0) {
