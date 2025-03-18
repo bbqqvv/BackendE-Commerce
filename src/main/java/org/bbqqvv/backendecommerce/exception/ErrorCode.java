@@ -78,6 +78,10 @@ public enum ErrorCode {
     INVALID_DISCOUNT_TYPE(8611, "Discount type is required", HttpStatus.BAD_REQUEST),
     INVALID_DISCOUNT_DATES(8612, "Start date must be before expiry date", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST(8613,"Invalid Request", HttpStatus.BAD_REQUEST),
+    DISCOUNT_ALREADY_ADDED(8614,"Discount already added", HttpStatus.BAD_REQUEST),
+    INVALID_MAX_DISCOUNT_AMOUNT(8615,"Invalid max discount amount", HttpStatus.BAD_REQUEST),
+    INVALID_DISCOUNT_AMOUNT_LIMIT(8616,"Invalid discount amount limit", HttpStatus.BAD_REQUEST),
+    DISCOUNT_ALREADY_SAVED(8617,"Discount already saved", HttpStatus.BAD_REQUEST),
     // 9000 Series - Security & Access Errors
     ACCESS_DENIED(9001, "Access denied", HttpStatus.UNAUTHORIZED),
 

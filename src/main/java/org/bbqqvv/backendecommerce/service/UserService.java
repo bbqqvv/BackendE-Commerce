@@ -23,4 +23,6 @@ public interface UserService {
     boolean existsByUsername(String username);
 
     void changePassword(ChangePasswordRequest request);
+
+    UserResponse getCurrentUser();
 }

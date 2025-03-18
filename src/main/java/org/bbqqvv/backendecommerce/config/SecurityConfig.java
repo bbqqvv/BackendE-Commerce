@@ -36,6 +36,10 @@ public class SecurityConfig {
     private static final String[] WHITE_LIST_URL = {
             "/auth/login",
             "/auth/register",
+            "/auth/oauth2/google",
+            "/auth/forgot-password",
+            "/auth/verify-otp",
+            "/auth/reset-password",
             "/api/categories/**",
             "/api/products/**",
             "/api/cart/**",
