@@ -1,6 +1,7 @@
 package org.bbqqvv.backendecommerce.repository;
 
 import jakarta.transaction.Transactional;
+import org.bbqqvv.backendecommerce.entity.Discount;
 import org.bbqqvv.backendecommerce.entity.DiscountUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -22,4 +23,12 @@ public interface DiscountUserRepository extends JpaRepository<DiscountUser, Long
     @Transactional
     @Query("DELETE FROM DiscountUser du WHERE du.discount.id = :discountId AND du.user.id IN :userIds")
     void deleteByDiscountIdAndUserIds(@Param("discountId") Long discountId, @Param("userIds") Set<Long> userIds);
+
+    @Query("SELECT du.discount FROM DiscountUser du WHERE du.user.id = :userId")
+    List<Discount> findDiscountsByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(du) > 0 FROM DiscountUser du WHERE du.discount.id = :discountId AND du.user.id = :userId")
+    boolean existsByDiscountIdAndUserId(@Param("discountId") Long discountId, @Param("userId") Long userId);
+
+    boolean existsByUserIdAndDiscountCode(Long id, String discountCode);
 }

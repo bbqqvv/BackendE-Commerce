@@ -1,5 +1,6 @@
 package org.bbqqvv.backendecommerce.service;
 
+import jakarta.validation.Valid;
 import org.bbqqvv.backendecommerce.dto.request.DiscountPreviewRequest;
 import org.bbqqvv.backendecommerce.dto.request.DiscountRequest;
 import org.bbqqvv.backendecommerce.dto.response.DiscountPreviewResponse;
@@ -19,7 +20,8 @@ public interface DiscountService {
 
     void removeUsersFromDiscount(Long id, List<Long> userIds);
 
-    List<String> getUserDiscountCodes();
+    List<DiscountResponse> getCurrentUserDiscount();
 
     DiscountPreviewResponse previewDiscount(DiscountPreviewRequest discountPreviewRequest);
+    void saveDiscount(@Valid String discountCode);
 }

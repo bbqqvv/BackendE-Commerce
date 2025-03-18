@@ -61,10 +61,10 @@ public class FavouriteServiceImpl implements FavouriteService {
 
     @Override
     @Transactional
-    public FavouriteResponse removeFavourite(Long productId) {
+    public FavouriteResponse removeFavourite(Long favouriteId) {
         User user = getAuthenticatedUser();
 
-        Favourite existingFavourite = favouriteRepository.findByUserIdAndProductId(user.getId(), productId)
+        Favourite existingFavourite = favouriteRepository.findById(favouriteId)
                 .orElseThrow(() -> new AppException(ErrorCode.REMOVE_FAVOURITE_NOT_FOUND));
 
         favouriteRepository.delete(existingFavourite);

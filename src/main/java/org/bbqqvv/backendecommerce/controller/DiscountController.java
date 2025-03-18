@@ -100,15 +100,14 @@ public class DiscountController {
     }
 
     // 📌 Lấy danh sách mã giảm giá của user hiện tại
-    @GetMapping("/user-discounts")
-    public ApiResponse<List<String>> getUserDiscountCodes() {
-        return ApiResponse.<List<String>>builder()
+    @GetMapping("/me")
+    public ApiResponse<List<DiscountResponse>> getUserDiscountCodes() {
+        return ApiResponse.<List<DiscountResponse>>builder()
                 .success(true)
                 .message("User's discount codes retrieved successfully")
-                .data(discountService.getUserDiscountCodes())
+                .data(discountService.getCurrentUserDiscount())
                 .build();
     }
-
 
     // 📌 Xem trước số tiền giảm giá trước khi đặt hàng
     @PostMapping("/preview-discount")
@@ -119,5 +118,13 @@ public class DiscountController {
                 .data(discountService.previewDiscount(discountPreviewRequest))
                 .build();
     }
-
+    @PostMapping("/save")
+    public ApiResponse<String> saveDiscount(@RequestBody @Valid String discountCode) {
+        discountService.saveDiscount(discountCode);
+        return ApiResponse.<String>builder()
+                .success(true)
+                .data("All users and products removed from discount.")
+                .message("Users and products removed successfully.")
+                .build();
+    }
 }

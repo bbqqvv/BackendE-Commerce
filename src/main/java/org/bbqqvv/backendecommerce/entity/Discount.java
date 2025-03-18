@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -54,10 +55,11 @@ public class Discount {
     private boolean active = true; // Trạng thái hoạt động của mã giảm giá
 
     @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DiscountProduct> applicableProducts;
+    private List<DiscountProduct> applicableProducts = new ArrayList<>();
 
     @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DiscountUser> applicableUsers;
+    private List<DiscountUser> applicableUsers = new ArrayList<>();
+
 
     @CreationTimestamp
     @Column(updatable = false)

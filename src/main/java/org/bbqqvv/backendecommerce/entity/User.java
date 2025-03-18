@@ -12,6 +12,7 @@ import java.util.Set;
 @Entity
 @Table(name = "users")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -19,11 +20,13 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = true)
+    private String providerId;
 
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password", nullable = true)
     private String password;
 
     @Column(name = "email", nullable = false, unique = true, length = 100)
@@ -50,6 +53,10 @@ public class User {
     @Column(name = "role")
     private Set<Role> authorities;
 
+    @Column(name = "provider")
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -69,6 +76,12 @@ public class User {
         this.username = username;
         this.password = password;
         this.email = email;
+    }
+    public User(String username, String email, AuthProvider provider) {
+        this.username = username;
+        this.email = email;
+        this.provider = provider;
+        this.authorities = Set.of(Role.ROLE_USER);
     }
 
     public User(String username, String password, String email, Role role) {

@@ -66,6 +66,7 @@ public class UserController {
     public ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody @Valid UserCreationRequest request) {
         UserResponse userResponse = userService.updateUser(id, request);
         return ApiResponse.<UserResponse>builder()
+                .success(true)
                 .message("User updated successfully")
                 .data(userResponse)
                 .build();
@@ -81,4 +82,16 @@ public class UserController {
                 .data("User deleted")
                 .build();
     }
+
+// Lấy thông tin user hiện tại từ token
+    @GetMapping("/me")
+    public ApiResponse<UserResponse> getCurrentUser() {
+        UserResponse userResponse = userService.getCurrentUser();
+        return ApiResponse.<UserResponse>builder()
+                .success(true)
+                .message("User retrieved successfully")
+                .data(userResponse)
+                .build();
+    }
+
 }

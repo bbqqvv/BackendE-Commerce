@@ -73,10 +73,14 @@ private final CartService cartService;
                 .updatedAt(LocalDateTime.now())
                 .build();
 
+        List<DiscountProduct> discountProducts = getDiscountProducts(discount, request.getApplicableProducts());
+        List<DiscountUser> discountUsers = getDiscountUsers(discount, request.getApplicableUsers());
+
+        discount.setApplicableProducts(discountProducts);
+        discount.setApplicableUsers(discountUsers);
+
         discount = discountRepository.saveAndFlush(discount);
 
-        discount.setApplicableProducts(getDiscountProducts(discount, request.getApplicableProducts()));
-        discount.setApplicableUsers(getDiscountUsers(discount, request.getApplicableUsers()));
 
         return discountMapper.toDiscountResponse(discountRepository.save(discount));
     }
@@ -133,20 +137,22 @@ private final CartService cartService;
 
 
     private void validateDiscountRequest(DiscountRequest request) {
-        String code = Objects.requireNonNullElse(request.getCode(), "").trim();
-        BigDecimal discountAmount = Objects.requireNonNullElse(request.getDiscountAmount(), BigDecimal.ZERO);
-        BigDecimal maxDiscountAmount = Objects.requireNonNullElse(request.getMaxDiscountAmount(), BigDecimal.ZERO);
-        BigDecimal minOrderValue = Objects.requireNonNullElse(request.getMinOrderValue(), BigDecimal.ZERO);
-        Integer usageLimit = Objects.requireNonNullElse(request.getUsageLimit(), 0);
+        String code = Optional.ofNullable(request.getCode()).orElse("").trim();
+        BigDecimal discountAmount = Optional.ofNullable(request.getDiscountAmount()).orElse(BigDecimal.ZERO);
+        BigDecimal maxDiscountAmount = Optional.ofNullable(request.getMaxDiscountAmount()).orElse(BigDecimal.ZERO);
+        BigDecimal minOrderValue = Optional.ofNullable(request.getMinOrderValue()).orElse(BigDecimal.ZERO);
+        Integer usageLimit = Optional.ofNullable(request.getUsageLimit()).orElse(0);
         LocalDateTime startDate = request.getStartDate();
         LocalDateTime expiryDate = request.getExpiryDate();
 
         if (code.isEmpty()) throw new AppException(ErrorCode.INVALID_DISCOUNT_CODE);
         if (discountAmount.compareTo(BigDecimal.ZERO) <= 0) throw new AppException(ErrorCode.INVALID_DISCOUNT_AMOUNT);
-        if (Objects.isNull(request.getDiscountType())) throw new AppException(ErrorCode.INVALID_DISCOUNT_TYPE);
+        if (maxDiscountAmount.compareTo(BigDecimal.ZERO) < 0) throw new AppException(ErrorCode.INVALID_MAX_DISCOUNT_AMOUNT);
+        if (discountAmount.compareTo(maxDiscountAmount) > 0) throw new AppException(ErrorCode.INVALID_DISCOUNT_AMOUNT_LIMIT);
+        if (request.getDiscountType() == null) throw new AppException(ErrorCode.INVALID_DISCOUNT_TYPE);
         if (minOrderValue.compareTo(BigDecimal.ZERO) < 0) throw new AppException(ErrorCode.INVALID_MIN_ORDER_VALUE);
         if (usageLimit < 1) throw new AppException(ErrorCode.INVALID_USAGE_LIMIT);
-        if (Objects.isNull(startDate) || Objects.isNull(expiryDate) || startDate.isAfter(expiryDate)) {
+        if (startDate == null || expiryDate == null || startDate.isAfter(expiryDate)) {
             throw new AppException(ErrorCode.INVALID_DISCOUNT_DATES);
         }
     }
@@ -273,6 +279,20 @@ private final CartService cartService;
         discountUserRepository.deleteByDiscountIdAndUserIds(id, userIdSet);
     }
 
+    @Override
+    public List<DiscountResponse> getCurrentUserDiscount() {
+        User currentUser = getAuthenticatedUser(); // Lấy thông tin người dùng hiện tại
+
+        // Truy vấn danh sách giảm giá dành riêng cho user
+        List<Discount> discounts = discountUserRepository.findDiscountsByUserId(currentUser.getId());
+
+        // Convert sang DTO và trả về danh sách
+        return discounts.stream()
+                .map(discountMapper::toDiscountResponse)
+                .toList();
+    }
+
+
 
     private User getAuthenticatedUser() {
         String username = SecurityUtils.getCurrentUserLogin()
@@ -283,11 +303,6 @@ private final CartService cartService;
     }
 
 
-    @Override
-    public List<String> getUserDiscountCodes() {
-        User currentUser = getAuthenticatedUser(); // 🔥 Lấy user hiện tại
-        return discountUserRepository.findDiscountCodesByUserId(currentUser.getId());
-    }
 
 
     @Override
@@ -324,6 +339,32 @@ private final CartService cartService;
                 .message(valid ? "Discount applied successfully" : "Discount not applicable")
                 .build();
     }
+
+
+    @Override
+    public void saveDiscount(String discountCode) {
+        // Lấy thông tin người dùng hiện tại
+        User currentUser = getAuthenticatedUser();
+
+        // Kiểm tra mã giảm giá có tồn tại không
+        Discount discount = discountRepository.findByCode(discountCode)
+                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
+
+        // Kiểm tra xem user đã lưu mã giảm giá này chưa
+        boolean alreadySaved = discountUserRepository.existsByUserIdAndDiscountCode(currentUser.getId(), discountCode);
+        if (alreadySaved) {
+            throw new AppException(ErrorCode.DISCOUNT_ALREADY_SAVED);
+        }
+
+        // Lưu mã giảm giá vào danh sách của user
+        DiscountUser discountUser = new DiscountUser(discount, currentUser);
+        discountUserRepository.save(discountUser);
+
+        // Tăng số lượt sử dụng của mã giảm giá
+        discount.setTimesUsed(discount.getTimesUsed() + 1);
+        discountRepository.save(discount);
+    }
+
 
     private BigDecimal calculateDiscountAmount(Discount discount, BigDecimal originalTotalAmount) {
         if (discount == null || originalTotalAmount == null || originalTotalAmount.compareTo(BigDecimal.ZERO) <= 0) {

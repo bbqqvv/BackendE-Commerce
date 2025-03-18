@@ -9,8 +9,9 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "discount_users")
-public class DiscountUser {
+@Table(name = "discount_user", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "discount_id"}) // Đảm bảo mỗi user chỉ có 1 bản ghi với mỗi discount
+})public class DiscountUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
