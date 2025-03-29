@@ -6,9 +6,6 @@ import org.bbqqvv.backendecommerce.entity.AuthProvider;
 import org.bbqqvv.backendecommerce.entity.User;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,58 +31,52 @@ public class OAuth2Service {
 
     @Transactional
     public String loginWithGoogle(String googleToken) {
-        log.info("Logging in with Google token");
+        log.info("Validating Google token...");
 
-        // Gửi request lấy thông tin user từ Google
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(googleToken);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
+        // Gửi request xác minh token với Google
+        String validationUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + googleToken;
+        ResponseEntity<Map> validationResponse;
 
-        ResponseEntity<Map> response;
         try {
-            response = restTemplate.exchange(googleUserInfoUrl, HttpMethod.GET, entity, Map.class);
+            validationResponse = restTemplate.getForEntity(validationUrl, Map.class);
         } catch (Exception e) {
-            log.error("Failed to fetch user info from Google: {}", e.getMessage());
-            throw new RuntimeException("Google authentication failed", e);
+            log.error("Failed to validate Google token: {}", e.getMessage());
+            throw new RuntimeException("Invalid Google token", e);
         }
 
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            log.error("Google authentication failed: Invalid response");
-            throw new RuntimeException("Google authentication failed");
+        // Kiểm tra phản hồi
+        if (!validationResponse.getStatusCode().is2xxSuccessful() || validationResponse.getBody() == null) {
+            log.error("Google token validation failed");
+            throw new RuntimeException("Invalid Google token");
         }
 
-        // Trích xuất thông tin user từ Google
-        Map<String, Object> googleUser = response.getBody();
+        // Lấy thông tin user từ token
+        Map<String, Object> googleUser = validationResponse.getBody();
         String email = (String) googleUser.get("email");
         String name = (String) googleUser.get("name");
         String googleId = (String) googleUser.get("sub"); // Google user ID
 
         if (email == null || googleId == null) {
-            log.error("Google response missing required fields");
+            log.error("Google token missing required fields");
             throw new RuntimeException("Invalid Google user data");
         }
 
-        // Kiểm tra xem user đã tồn tại chưa
+        // Kiểm tra user trong DB hoặc tạo mới
         User user = userRepository.findByEmail(email).orElse(null);
-
         if (user == null) {
-            // Nếu user chưa tồn tại, tạo mới từ Google
             log.info("Creating new user from Google login: {}", email);
             user = User.builder()
                     .email(email)
                     .username(name)
                     .provider(AuthProvider.GOOGLE)
-                    .providerId(googleId) // Lưu Google ID
+                    .providerId(googleId)
                     .build();
             userRepository.save(user);
         } else {
-            // Nếu user đã tồn tại nhưng chưa có providerId, cập nhật nó
             if (user.getProviderId() == null) {
                 user.setProviderId(googleId);
                 userRepository.save(user);
             }
-
-            // Nếu user đăng ký bằng email/password trước, nhưng giờ đăng nhập bằng Google, liên kết tài khoản
             if (user.getProvider() == AuthProvider.LOCAL) {
                 log.info("User {} đã đăng ký bằng email/password trước, cập nhật provider thành GOOGLE.", email);
                 user.setProvider(AuthProvider.GOOGLE);
@@ -93,12 +84,10 @@ public class OAuth2Service {
             }
         }
 
-        // Tạo JWT token cho user
+        // Tạo JWT token và trả về
         String token = jwtTokenUtil.generateToken(user.getEmail());
         log.info("Google login successful for email: {}", email);
-
         return token;
     }
-
 
 }

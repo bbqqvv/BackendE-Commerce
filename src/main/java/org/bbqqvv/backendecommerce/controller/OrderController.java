@@ -6,6 +6,7 @@ import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.request.OrderRequest;
 import org.bbqqvv.backendecommerce.dto.response.OrderResponse;
 import org.bbqqvv.backendecommerce.service.OrderService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,6 +49,7 @@ public class OrderController {
 
     // 📌 Lấy tất cả đơn hàng (dành cho admin)
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<List<OrderResponse>> getAllOrders() {
         return ApiResponse.<List<OrderResponse>>builder()
                 .success(true)
@@ -68,6 +70,7 @@ public class OrderController {
 
     // 📌 Cập nhật trạng thái đơn hàng
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<OrderResponse> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
         return ApiResponse.<OrderResponse>builder()
                 .success(true)
@@ -89,6 +92,7 @@ public class OrderController {
 
     // 📌 Xóa đơn hàng theo ID
     @DeleteMapping("/{id}/delete")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<String> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return ApiResponse.<String>builder()
@@ -97,6 +101,4 @@ public class OrderController {
                 .data("Order deleted")
                 .build();
     }
-
-
 }

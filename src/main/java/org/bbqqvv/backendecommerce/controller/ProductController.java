@@ -1,5 +1,6 @@
 package org.bbqqvv.backendecommerce.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
@@ -7,9 +8,8 @@ import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.bbqqvv.backendecommerce.service.ProductService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/products")
@@ -20,6 +20,7 @@ public class ProductController {
 
     // Tạo mới một sản phẩm
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ProductResponse> createProduct(@ModelAttribute ProductRequest productRequest) {
         ProductResponse product = productService.createProduct(productRequest);
         return ApiResponse.<ProductResponse>builder()
@@ -66,7 +67,7 @@ public class ProductController {
     @GetMapping("/find-by-category-slug/{slug}")
     public ApiResponse<PageResponse<ProductResponse>> findProductByCategorySlug(
             @PathVariable String slug,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @PageableDefault(size = 9) Pageable pageable) {
         PageResponse<ProductResponse> productPage = productService.findProductByCategorySlug(slug, pageable);
         return ApiResponse.<PageResponse<ProductResponse>>builder()
                 .success(true)
@@ -77,6 +78,7 @@ public class ProductController {
 
     // Cập nhật thông tin sản phẩm
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ProductResponse> updateProduct(@PathVariable Long id, @ModelAttribute ProductRequest productRequest) {
         ProductResponse updatedProduct = productService.updateProduct(id, productRequest);
         return ApiResponse.<ProductResponse>builder()
@@ -88,12 +90,28 @@ public class ProductController {
 
     // Xóa sản phẩm
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<String> deleteProduct(@PathVariable Long id) {
         boolean deleted = productService.deleteProduct(id);
         return ApiResponse.<String>builder()
                 .success(true)
                 .message(deleted ? "Product deleted successfully" : "Product not found")
                 .data(deleted ? "Deleted" : "Not found")
+                .build();
+    }
+
+    // Tìm kiếm sản phẩm theo tên
+    @GetMapping("/search")
+    public ApiResponse<PageResponse<ProductResponse>> searchProductsByName(
+            @RequestParam String name,
+            @PageableDefault(size = 9, page = 0) Pageable pageable) {  // ✅ Spring tự động tạo Pageable
+
+        PageResponse<ProductResponse> productPage = productService.searchProductsByName(name, pageable);
+
+        return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .success(true)
+                .message("Products retrieved successfully")
+                .data(productPage)
                 .build();
     }
 }

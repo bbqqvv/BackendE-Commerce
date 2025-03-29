@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 public interface OrderMapper {
 
     Order toOrder(OrderRequest orderRequest);
-    @Mapping(target = "userName", source = "user.username")
+    @Mapping(target = "name", source = "recipientName")
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "items", source = "orderItems")
     @Mapping(target = "address", source = "fullAddress")

@@ -5,11 +5,13 @@ import org.bbqqvv.backendecommerce.dto.request.AuthenticationRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.entity.AuthProvider;
+import org.bbqqvv.backendecommerce.entity.Role;
 import org.bbqqvv.backendecommerce.entity.User;
 import org.bbqqvv.backendecommerce.mapper.UserMapper;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
-import org.bbqqvv.backendecommerce.service.UserService;
 import org.bbqqvv.backendecommerce.util.ValidateUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,22 +19,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
+
 
 @Service
 public class AuthenticationService {
-
-    private final UserService userService;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
-    public AuthenticationService(UserService userService, UserMapper userMapper,
+    public AuthenticationService(UserMapper userMapper,
                                  PasswordEncoder passwordEncoder,
                                  AuthenticationManager authenticationManager,
                                  JwtTokenUtil jwtTokenUtil, UserRepository userRepository) {
-        this.userService = userService;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -59,12 +61,17 @@ public class AuthenticationService {
         String encodedPassword = passwordEncoder.encode(registerUserDto.getPassword());
 
         // Tạo user mới với provider mặc định là LOCAL (email/password)
+        boolean isFirstUser = userRepository.count() == 0;
+        logger.info("Is first user: {}", isFirstUser);
+
         User newUser = User.builder()
                 .username(registerUserDto.getUsername())
                 .password(encodedPassword)
                 .email(registerUserDto.getEmail())
                 .provider(AuthProvider.LOCAL)
+                .authorities(Set.of(isFirstUser ? Role.ROLE_ADMIN : Role.ROLE_USER)) // ✅ Set role
                 .build();
+        logger.info("Created user: {}", newUser);
 
         // Lưu user vào database
         userRepository.save(newUser);

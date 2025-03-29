@@ -83,7 +83,7 @@ public class CartServiceImpl implements CartService {
                 throw new AppException(ErrorCode.OUT_OF_STOCK);
             }
 
-            BigDecimal price = sizeProduct.getPrice() != null ? sizeProduct.getPrice() : BigDecimal.ZERO;
+            BigDecimal price = sizeProduct.getPriceAfterDiscount() != null ? sizeProduct.getPriceAfterDiscount() : BigDecimal.ZERO;
             boolean isInStock = sizeProduct.getStockQuantity() >= itemRequest.getQuantity();
 
             cartItemMap.computeIfAbsent(key, k -> {
@@ -97,10 +97,12 @@ public class CartServiceImpl implements CartService {
                         .price(price)
                         .subtotal(BigDecimal.ZERO)
                         .inStock(isInStock)
+                        .stock(sizeProduct.getStockQuantity())
                         .build();
                 cart.getCartItems().add(newCartItem);
                 return newCartItem;
             }).setQuantity(newTotalQuantity);
+
 
             cartItemMap.get(key).setSubtotal(price.multiply(BigDecimal.valueOf(newTotalQuantity)));
         });
@@ -134,13 +136,13 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
 
-        cart.getCartItems().forEach(cartItem -> sizeProductRepository.findByProductIdAndSizeName(cartItem.getProduct().getId(), cartItem.getSizeName())
-                .ifPresent(sizeProduct -> cartItem.setInStock(
-                        sizeProduct.getProductVariantSizes().stream()
-                                .map(SizeProductVariant::getStock)
-                                .findFirst()
-                                .orElse(0) >= cartItem.getQuantity()
-                )));
+        cart.getCartItems().forEach(cartItem -> sizeProductRepository.findByProductIdAndSizeName(
+                        cartItem.getProduct().getId(), cartItem.getSizeName())
+                .ifPresent(sizeProduct -> {
+                    cartItem.setStock(sizeProduct.getStockQuantity()); // ✅ Cập nhật stock
+                    cartItem.setInStock(sizeProduct.getStockQuantity() >= cartItem.getQuantity());
+                })
+        );
 
         return cartMapper.toCartResponse(cart);
     }

@@ -24,6 +24,7 @@ public class Address {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Getter
     @Column
     private String recipientName;
 
@@ -70,7 +71,6 @@ public class Address {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
     public String getFullAddress() {
         return String.format("%s, %s, %s, %s, %s",
                 addressLine != null ? addressLine : "",
@@ -79,7 +79,5 @@ public class Address {
                 province != null ? province : "",
                 country != null ? country : "");
     }
-
-
 
 }

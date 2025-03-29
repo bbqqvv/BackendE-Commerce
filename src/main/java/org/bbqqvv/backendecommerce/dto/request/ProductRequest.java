@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -31,6 +31,7 @@ public class ProductRequest {
     @Max(value = 100, message = "Sale percentage must be less than or equal to 100")
     private int salePercentage;
     private boolean featured;
+    private Set<String> tags;
     private boolean sale;
     private boolean active ;
     private boolean isOldProduct = false;

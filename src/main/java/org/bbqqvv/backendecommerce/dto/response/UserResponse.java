@@ -3,9 +3,7 @@ package org.bbqqvv.backendecommerce.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -14,9 +12,11 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserResponse {
-    String id;
+    Long id;
     String username;
+    String name;
     String email;
+    String bio;
     Set<RoleResponse> authorities;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

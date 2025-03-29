@@ -6,7 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
 import org.bbqqvv.backendecommerce.dto.request.ChangePasswordRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
+import org.bbqqvv.backendecommerce.dto.request.UserUpdateRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
+import org.bbqqvv.backendecommerce.dto.response.UserUpdateResponse;
 import org.bbqqvv.backendecommerce.entity.User;
 import org.bbqqvv.backendecommerce.exception.AppException;
 import org.bbqqvv.backendecommerce.exception.ErrorCode;
@@ -16,19 +18,15 @@ import org.bbqqvv.backendecommerce.service.UserService;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class UserServiceImpl implements UserService {
-
     UserRepository userRepository;
     UserMapper userMapper;
-    PasswordEncoder passwordEncoder;  // Thêm PasswordEncoder
-
+    PasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -117,6 +115,25 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByUsername(username);
     }
 
+    @Override
+    public UserUpdateResponse updateUserInfo(UserUpdateRequest request) {
+        String username = SecurityUtils.getCurrentUserLogin()
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHORIZED));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // Cập nhật name và bio nếu có
+        if (request.getName() != null) {
+            user.setName(request.getName());
+        }
+        if (request.getBio() != null) {
+            user.setBio(request.getBio());
+        }
+
+        userRepository.save(user);
+        return new UserUpdateResponse(user.getName(), user.getBio());
+    }
 
     @Override
     public void changePassword(ChangePasswordRequest request) {

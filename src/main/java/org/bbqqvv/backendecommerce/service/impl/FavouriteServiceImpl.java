@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
 import org.bbqqvv.backendecommerce.dto.response.FavouriteResponse;
 import org.bbqqvv.backendecommerce.entity.Favourite;
+import org.bbqqvv.backendecommerce.entity.Product;
 import org.bbqqvv.backendecommerce.entity.User;
 import org.bbqqvv.backendecommerce.exception.AppException;
 import org.bbqqvv.backendecommerce.exception.ErrorCode;
@@ -55,8 +56,12 @@ public class FavouriteServiceImpl implements FavouriteService {
         favourite.setProduct(product);
 
         Favourite savedFavourite = favouriteRepository.save(favourite);
+        FavouriteResponse response = favouriteMapper.toFavouriteResponse(savedFavourite);
 
-        return favouriteMapper.toFavouriteResponse(savedFavourite);
+        // ✅ Tính toán stockStatus trong service
+        response.setStockStatus(getStockStatus(product));
+
+        return response;
     }
 
     @Override
@@ -69,12 +74,18 @@ public class FavouriteServiceImpl implements FavouriteService {
 
         favouriteRepository.delete(existingFavourite);
 
-        return FavouriteResponse.builder()
+        FavouriteResponse response = FavouriteResponse.builder()
                 .id(existingFavourite.getId())
                 .userId(existingFavourite.getUser().getId())
                 .nameProduct(existingFavourite.getProduct().getName())
                 .imageUrl(existingFavourite.getProduct().getMainImage().getImageUrl())
+                .productUrl(existingFavourite.getProduct().getSlug()) // ✅ Lấy productUrl
                 .build();
+
+        // ✅ Tính toán stockStatus trong service
+        response.setStockStatus(getStockStatus(existingFavourite.getProduct()));
+
+        return response;
     }
 
     @Override
@@ -84,7 +95,11 @@ public class FavouriteServiceImpl implements FavouriteService {
         List<Favourite> favourites = favouriteRepository.findByUserId(user.getId());
 
         return favourites.stream()
-                .map(favouriteMapper::toFavouriteResponse)
+                .map(favourite -> {
+                    FavouriteResponse response = favouriteMapper.toFavouriteResponse(favourite);
+                    response.setStockStatus(getStockStatus(favourite.getProduct())); // ✅ Gán stockStatus
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -94,5 +109,14 @@ public class FavouriteServiceImpl implements FavouriteService {
 
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    /**
+     * ✅ Phương thức tính toán StockStatus (Còn hàng / Hết hàng)
+     */
+    private String getStockStatus(Product product) {
+        return product.getVariants().stream()
+                .flatMap(v -> v.getProductVariantSizes().stream())
+                .anyMatch(size -> size.getStock() > 0) ? "Còn hàng" : "Hết hàng";
     }
 }

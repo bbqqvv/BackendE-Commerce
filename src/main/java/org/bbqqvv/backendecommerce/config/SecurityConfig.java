@@ -41,9 +41,11 @@ public class SecurityConfig {
             "/auth/verify-otp",
             "/auth/reset-password",
             "/api/categories/**",
+            "/api/products-review/**",
             "/api/products/**",
             "/api/cart/**",
             "/api/orders/**",
+            "/api/search-history/**",
             "api/addresses/**",
             "api/favourites/**"
 
@@ -62,7 +64,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Cấu hình CORS
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF cho API REST
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(WHITE_LIST_URL).permitAll() // Các yêu cầu GET không cần xác thực
+                        .requestMatchers(WHITE_LIST_URL).permitAll() // ✅ Các API trong danh sách này không cần xác thực
                         .requestMatchers(SECURED_URL_PATTERNS).authenticated() // Các phương thức POST, PUT, DELETE yêu cầu xác thực
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenUtil, customUserDetailsService),

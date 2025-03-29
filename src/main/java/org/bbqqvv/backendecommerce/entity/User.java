@@ -26,11 +26,17 @@ public class User {
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
 
+    @Column(name = "name", nullable = true, length = 100)
+    private String name;
+
     @Column(name = "password", nullable = true)
     private String password;
 
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
+
+    @Column(name = "bio", length = 500)
+    private String bio;
 
     @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -50,6 +56,7 @@ public class User {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Enumerated(EnumType.STRING)  // ✅ Lưu dưới dạng chuỗi (ROLE_USER, ROLE_ADMIN)
     @Column(name = "role")
     private Set<Role> authorities;
 
@@ -64,31 +71,12 @@ public class User {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        this.authorities = Set.of(Role.ROLE_USER);
     }
+
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public User(String username, String password, String email) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-    }
-    public User(String username, String email, AuthProvider provider) {
-        this.username = username;
-        this.email = email;
-        this.provider = provider;
-        this.authorities = Set.of(Role.ROLE_USER);
-    }
-
-    public User(String username, String password, String email, Role role) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.authorities = Set.of(role);
     }
 
     public boolean isAdmin() {

@@ -15,6 +15,7 @@ import org.bbqqvv.backendecommerce.mapper.VariantMapper;
 import org.bbqqvv.backendecommerce.repository.CategoryRepository;
 import org.bbqqvv.backendecommerce.repository.ProductRepository;
 import org.bbqqvv.backendecommerce.repository.SizeProductRepository;
+import org.bbqqvv.backendecommerce.repository.TagRepository;
 import org.bbqqvv.backendecommerce.service.ProductService;
 import org.bbqqvv.backendecommerce.service.img.FileStorageService;
 import org.bbqqvv.backendecommerce.util.SlugUtils;
@@ -29,6 +30,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,19 +43,20 @@ public class ProductServiceImpl implements ProductService {
     SizeProductRepository sizeProductRepository;
     ProductMapper productMapper;
     FileStorageService fileStorageService;
-
+    TagRepository tagRepository;
     public ProductServiceImpl(ProductRepository productRepository,
                               CategoryRepository categoryRepository,
                               ProductMapper productMapper,
                               VariantMapper variantMapper,
                               FileStorageService fileStorageService,
                               SizeProductRepository sizeProductRepository,
-                              SizeProductMapper sizeProductMapper) {
+                              SizeProductMapper sizeProductMapper, TagRepository tagRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productMapper = productMapper;
         this.fileStorageService = fileStorageService;
         this.sizeProductRepository = sizeProductRepository;
+        this.tagRepository = tagRepository;
     }
 
     @Override
@@ -136,6 +139,23 @@ public class ProductServiceImpl implements ProductService {
         return true;
     }
 
+    @Override
+    public PageResponse<ProductResponse> searchProductsByName(String name, Pageable pageable) {
+        Page<Product> products = productRepository.findByNameContainingIgnoreCase(name, pageable);
+        List<ProductResponse> productResponses = products.stream()
+                .map(this::toFullProductResponse)
+                .collect(Collectors.toList());
+
+        return PageResponse.<ProductResponse>builder()
+                .currentPage(products.getNumber())
+                .totalPages(products.getTotalPages())
+                .pageSize(products.getSize())
+                .totalElements(products.getTotalElements())
+                .items(productResponses)
+                .build();
+    }
+
+
     private Category getCategoryById(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
@@ -145,9 +165,20 @@ public class ProductServiceImpl implements ProductService {
         Product product = productMapper.toProduct(productRequest);
         product.setCategory(category);
 
-        // Xử lý hình ảnh sản phẩm
+        // ✅ Xử lý hình ảnh
         handleImageUrls(product, productRequest);
 
+        // ✅ Xử lý tags từ productRequest
+        if (productRequest.getTags() != null) {
+            Set<Tag> tags = productRequest.getTags().stream()
+                    .map(tagName -> tagRepository.findByName(tagName)
+                            .orElseGet(() -> tagRepository.save(new Tag(tagName)))) // Tạo nếu chưa có
+                    .collect(Collectors.toSet());
+
+            product.setTags(tags);
+        }
+
+        // ✅ Xử lý variants và size
         if (productRequest.getVariants() != null) {
             List<ProductVariant> variants = productRequest.getVariants().stream().map(variantRequest -> {
                 ProductVariant variant = new ProductVariant();
@@ -159,7 +190,7 @@ public class ProductServiceImpl implements ProductService {
                         .map(fileStorageService::storeImage)
                         .ifPresent(variant::setImageUrl);
 
-                // Xử lý các kích thước cho từng variant
+                // Xử lý kích thước cho từng variant
                 List<SizeProductVariant> sizeVariants = Optional.ofNullable(variantRequest.getSizes())
                         .orElse(Collections.emptyList())
                         .stream()
@@ -169,8 +200,8 @@ public class ProductServiceImpl implements ProductService {
                                         SizeProduct newSize = new SizeProduct();
                                         newSize.setSizeName(sizeRequest.getSizeName());
                                         newSize.setPrice(sizeRequest.getPrice());
-                                        newSize.setPriceAfterDiscount(calculatePriceAfterDiscount(
-                                                sizeRequest.getPrice(), productRequest.getSalePercentage()));
+                                        newSize.setPriceAfterDiscount(
+                                                calculatePriceAfterDiscount(sizeRequest.getPrice(), productRequest.getSalePercentage()));
                                         return sizeProductRepository.save(newSize);
                                     });
 

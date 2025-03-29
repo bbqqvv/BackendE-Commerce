@@ -36,8 +36,9 @@ public class CartItem {
     @Column(nullable = false)
     private BigDecimal price;
     @Column(nullable = false)
+    private int stock;
+    @Column(nullable = false)
     private Boolean inStock;
-
     public BigDecimal getSubtotal() {
         return price.multiply(BigDecimal.valueOf(quantity));
     }

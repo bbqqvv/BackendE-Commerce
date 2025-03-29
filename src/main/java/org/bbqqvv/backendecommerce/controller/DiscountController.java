@@ -8,6 +8,7 @@ import org.bbqqvv.backendecommerce.dto.request.DiscountRequest;
 import org.bbqqvv.backendecommerce.dto.response.DiscountPreviewResponse;
 import org.bbqqvv.backendecommerce.dto.response.DiscountResponse;
 import org.bbqqvv.backendecommerce.service.DiscountService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,12 +21,69 @@ public class DiscountController {
     private final DiscountService discountService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<DiscountResponse> createDiscount(@RequestBody @Valid DiscountRequest request) {
         DiscountResponse discountResponse = discountService.createDiscount(request);
         return ApiResponse.<DiscountResponse>builder()
                 .success(true)
                 .data(discountResponse)
                 .message("Discount created successfully.")
+                .build();
+    }
+
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<DiscountResponse> updateDiscount(@PathVariable Long id, @RequestBody @Valid DiscountRequest request) {
+        DiscountResponse discountResponse = discountService.updateDiscount(id, request);
+        return ApiResponse.<DiscountResponse>builder()
+                .success(true)
+                .data(discountResponse)
+                .message("Discount updated successfully.")
+                .build();
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<String> deleteDiscount(@PathVariable Long id) {
+        discountService.deleteDiscount(id);
+        return ApiResponse.<String>builder()
+                .success(true)
+                .data("Discount deleted successfully.")
+                .message("The discount has been removed successfully.")
+                .build();
+    }
+
+    @DeleteMapping("/{id}/clear")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<String> clearUsersAndProducts(@PathVariable Long id) {
+        discountService.clearUsersAndProducts(id);
+        return ApiResponse.<String>builder()
+                .success(true)
+                .data("All users and products removed from discount.")
+                .message("Users and products removed successfully.")
+                .build();
+    }
+
+    @DeleteMapping("/{id}/remove-products")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<String> removeProductsFromDiscount(@PathVariable Long id, @RequestBody List<Long> productIds) {
+        discountService.removeProductsFromDiscount(id, productIds);
+        return ApiResponse.<String>builder()
+                .success(true)
+                .data("Selected products removed from discount.")
+                .message("Products removed successfully.")
+                .build();
+    }
+
+    @DeleteMapping("/{id}/remove-users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<String> removeUsersFromDiscount(@PathVariable Long id, @RequestBody List<Long> userIds) {
+        discountService.removeUsersFromDiscount(id, userIds);
+        return ApiResponse.<String>builder()
+                .success(true)
+                .data("Selected users removed from discount.")
+                .message("Users removed successfully.")
                 .build();
     }
 
@@ -48,57 +106,6 @@ public class DiscountController {
                 .message("List of discounts retrieved successfully.")
                 .build();
     }
-
-    @PutMapping("/{id}")
-    public ApiResponse<DiscountResponse> updateDiscount(@PathVariable Long id, @RequestBody @Valid DiscountRequest request) {
-        DiscountResponse discountResponse = discountService.updateDiscount(id, request);
-        return ApiResponse.<DiscountResponse>builder()
-                .success(true)
-                .data(discountResponse)
-                .message("Discount updated successfully.")
-                .build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ApiResponse<String> deleteDiscount(@PathVariable Long id) {
-        discountService.deleteDiscount(id);
-        return ApiResponse.<String>builder()
-                .success(true)
-                .data("Discount deleted successfully.")
-                .message("The discount has been removed successfully.")
-                .build();
-    }
-
-    @DeleteMapping("/{id}/clear")
-    public ApiResponse<String> clearUsersAndProducts(@PathVariable Long id) {
-        discountService.clearUsersAndProducts(id);
-        return ApiResponse.<String>builder()
-                .success(true)
-                .data("All users and products removed from discount.")
-                .message("Users and products removed successfully.")
-                .build();
-    }
-
-    @DeleteMapping("/{id}/remove-products")
-    public ApiResponse<String> removeProductsFromDiscount(@PathVariable Long id, @RequestBody List<Long> productIds) {
-        discountService.removeProductsFromDiscount(id, productIds);
-        return ApiResponse.<String>builder()
-                .success(true)
-                .data("Selected products removed from discount.")
-                .message("Products removed successfully.")
-                .build();
-    }
-
-    @DeleteMapping("/{id}/remove-users")
-    public ApiResponse<String> removeUsersFromDiscount(@PathVariable Long id, @RequestBody List<Long> userIds) {
-        discountService.removeUsersFromDiscount(id, userIds);
-        return ApiResponse.<String>builder()
-                .success(true)
-                .data("Selected users removed from discount.")
-                .message("Users removed successfully.")
-                .build();
-    }
-
     // 📌 Lấy danh sách mã giảm giá của user hiện tại
     @GetMapping("/me")
     public ApiResponse<List<DiscountResponse>> getUserDiscountCodes() {
@@ -119,12 +126,12 @@ public class DiscountController {
                 .build();
     }
     @PostMapping("/save")
-    public ApiResponse<String> saveDiscount(@RequestBody @Valid String discountCode) {
+    public ApiResponse<String> saveDiscount(@RequestParam @Valid String discountCode) {
         discountService.saveDiscount(discountCode);
         return ApiResponse.<String>builder()
                 .success(true)
-                .data("All users and products removed from discount.")
-                .message("Users and products removed successfully.")
+                .data("Save discount successfully")
+                .message("successfully.")
                 .build();
     }
 }

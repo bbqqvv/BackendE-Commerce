@@ -14,5 +14,7 @@ public class FavouriteResponse {
     private Long userId;
     private String nameProduct;
     private String imageUrl;
+    private String productUrl;
+    private String stockStatus;
     private BigDecimal price;
 }

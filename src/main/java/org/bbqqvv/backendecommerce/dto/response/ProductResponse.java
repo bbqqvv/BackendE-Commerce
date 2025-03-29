@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -23,6 +24,7 @@ public class ProductResponse {
     private boolean sale;
     private boolean active;
     private int salePercentage;
+    private Set<String> tags;
     private Long categoryId;
     private String mainImageUrl;
     private List<String> secondaryImageUrls;

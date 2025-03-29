@@ -25,6 +25,9 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(nullable = false)
+    private String recipientName;
+
     @Column(name = "full_address", nullable = false)
     private String fullAddress;
 
@@ -46,7 +49,7 @@ public class Order {
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
 
-    @Column(name = "discount_code", length = 50)
+    @Column(name = "discount_code", length = 50, nullable = true)
     private String discountCode;
 
     @Column(name = "discount_amount", precision = 10, scale = 2)

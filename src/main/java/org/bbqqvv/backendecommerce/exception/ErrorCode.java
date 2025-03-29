@@ -17,14 +17,15 @@ public enum ErrorCode {
     USER_EXISTED(1007, "User already exists", HttpStatus.BAD_REQUEST),
     PASSWORDS_DO_NOT_MATCH(1008, "Passwords do not match", HttpStatus.BAD_REQUEST),
     INVALID_OLD_PASSWORD(1009, "Old password is incorrect", HttpStatus.BAD_REQUEST),
-
+    ResourceNotFoundException(1010, "Resource not found", HttpStatus.NOT_FOUND),
     // 2000 Series - Product Errors
     PRODUCT_NOT_FOUND(2001, "Product not found with ID: {0}", HttpStatus.NOT_FOUND),
     DUPLICATE_PRODUCT_CODE(2002, "Product code already exists", HttpStatus.BAD_REQUEST),
     INVALID_AMOUNT(2003, "Invalid amount provided", HttpStatus.BAD_REQUEST),
     PRODUCT_OUT_OF_QUANTITY(2004, "Product out of stock", HttpStatus.BAD_REQUEST),
     PRODUCT_PRICE_INVALID(2005, "Product price is invalid", HttpStatus.BAD_REQUEST),
-
+    REVIEW_NOT_FOUND(2006, "Review not found", HttpStatus.NOT_FOUND),
+    ORDER_NOT_COMPLETED(2007,"Order not completed", HttpStatus.BAD_REQUEST),
     // 3000 Series - Cart Errors
     CART_NOT_FOUND(3001, "Cart not found with ID: {0}", HttpStatus.NOT_FOUND),
     CART_ITEM_NOT_FOUND(3002, "Cart item not found with Product ID: {0}", HttpStatus.NOT_FOUND),

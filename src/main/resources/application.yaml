@@ -7,9 +7,9 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   datasource:
-    url: jdbc:postgresql://localhost:5432/roway
-    username: vanbui
-    password: Vanbui262004@
+    url: ${DB_URL}  # Lấy giá trị từ biến môi trường DB_URL
+    username: ${DB_USERNAME}  # Lấy giá trị từ biến môi trường DB_USERNAME
+    password: ${DB_PASSWORD}  # Lấy giá trị từ biến môi trường DB_PASSWORD
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -18,8 +18,41 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: ${MAIL_HOST}  # Lấy giá trị từ biến môi trường MAIL_HOST
+    port: 587
+    username: ${MAIL_USERNAME}  # Lấy giá trị từ biến môi trường MAIL_USERNAME
+    password: ${MAIL_PASSWORD}  # Lấy giá trị từ biến môi trường MAIL_PASSWORD
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}  # Lấy giá trị từ biến môi trường GOOGLE_CLIENT_ID
+            client-secret: ${GOOGLE_CLIENT_SECRET}  # Lấy giá trị từ biến môi trường GOOGLE_CLIENT_SECRET
+            scope:
+              - email
+              - profile
+        provider:
+          google:
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+
 application:
   security:
     jwt:
-      secret-key: V0qfFwSH4RKrjG7F60Mm5NklyLTy2DsdDhRU03G2A1s=
+      secret-key: ${JWT_SECRET_KEY}  # Lấy giá trị từ biến môi trường JWT_SECRET_KEY
       expiration: 86400000
+
+payment:
+  vnPay:
+    url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    tmnCode: ${VNPAY_TMN_CODE}  # Lấy giá trị từ biến môi trường VNPAY_TMN_CODE
+    secretKey: ${VNPAY_SECRET_KEY}  # Lấy giá trị từ biến môi trường VNPAY_SECRET_KEY
+    version: 2.1.0
+    returnUrl: http://localhost:8080/api/v1/payment/vn-pay-callback

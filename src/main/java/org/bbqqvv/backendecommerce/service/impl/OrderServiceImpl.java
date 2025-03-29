@@ -32,7 +32,7 @@ public class OrderServiceImpl implements OrderService {
     private final SizeProductVariantRepository sizeProductVariantRepository;
     private final DiscountRepository discountRepository;
     private final OrderMapper orderMapper;
-    private static final BigDecimal FREE_SHIPPING_THRESHOLD = BigDecimal.valueOf(500000);
+    private static final BigDecimal FREE_SHIPPING_THRESHOLD = BigDecimal.valueOf(499000);
     private static final int EXPECTED_DELIVERY_DAYS = 5;
 
     public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
@@ -164,7 +164,7 @@ public class OrderServiceImpl implements OrderService {
     private BigDecimal calculateDiscountAmount(Discount discount, BigDecimal orderTotal) {
         if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
             return orderTotal.multiply(discount.getDiscountAmount()).divide(BigDecimal.valueOf(100));
-        } else if (discount.getDiscountType() == DiscountType.MONEY) {
+        } else if (discount.getDiscountType() == DiscountType.FIXED) {
             return discount.getDiscountAmount();
         }
         return BigDecimal.ZERO; // Nếu loại giảm giá không hợp lệ
@@ -187,9 +187,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private Order buildOrder(OrderRequest orderRequest, User user, Address address,
-                             BigDecimal shippingFee, Discount discount, BigDecimal discountAmount, BigDecimal totalAmount) {
-        return Order.builder()
+                             BigDecimal shippingFee, Discount discount, BigDecimal discountAmount,
+                             BigDecimal totalAmount) {
+        Order.OrderBuilder builder = Order.builder()
                 .user(user)
+                .recipientName(address.getRecipientName())
                 .fullAddress(address.getFullAddress())
                 .status(OrderStatus.PENDING)
                 .createdAt(LocalDateTime.now())
@@ -199,12 +201,16 @@ public class OrderServiceImpl implements OrderService {
                 .shippingFee(shippingFee)
                 .notes(address.getNote())
                 .discount(discount)
-                .discountCode(discount.getCode())
                 .discountAmount(discountAmount)
-                .totalAmount(totalAmount) // ✅ Đảm bảo totalAmount được set đúng
-                .build();
-    }
+                .totalAmount(totalAmount);
 
+        // Chỉ set discountCode nếu có discount
+        if (discount != null) {
+            builder.discountCode(discount.getCode());
+        }
+
+        return builder.build();
+    }
 
 
     private OrderItem buildOrderItem(Order order, Product product, SizeProductVariant sizeProductVariant, SizeProduct sizeProduct, OrderItemRequest itemRequest) {

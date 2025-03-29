@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.request.ChangePasswordRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
+import org.bbqqvv.backendecommerce.dto.request.UserUpdateRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
+import org.bbqqvv.backendecommerce.dto.response.UserUpdateResponse;
 import org.bbqqvv.backendecommerce.service.UserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +23,7 @@ public class UserController {
 
     // Tạo người dùng mới
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserCreationRequest request) {
         UserResponse userResponse = userService.createUser(request);
         return ApiResponse.<UserResponse>builder()
@@ -40,6 +44,7 @@ public class UserController {
 
     // Lấy người dùng theo ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse userResponse = userService.getUserById(id);
         return ApiResponse.<UserResponse>builder()
@@ -51,6 +56,7 @@ public class UserController {
 
     // Lấy tất cả người dùng
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<List<UserResponse>> getAllUsers() {
         List<UserResponse> userResponses = userService.getAllUsers();
         return ApiResponse.<List<UserResponse>>builder()
@@ -63,6 +69,7 @@ public class UserController {
 
     // Cập nhật thông tin người dùng
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody @Valid UserCreationRequest request) {
         UserResponse userResponse = userService.updateUser(id, request);
         return ApiResponse.<UserResponse>builder()
@@ -71,9 +78,19 @@ public class UserController {
                 .data(userResponse)
                 .build();
     }
+    @PutMapping("/me/update-info")
+    public ApiResponse<UserUpdateResponse> updateUserInfo(@RequestBody @Valid UserUpdateRequest request) {
+        UserUpdateResponse updatedUser = userService.updateUserInfo(request);
+        return ApiResponse.<UserUpdateResponse>builder()
+                .success(true)
+                .message("User info updated successfully")
+                .data(updatedUser)
+                .build();
+    }
 
     // Xóa người dùng
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<String> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ApiResponse.<String>builder()

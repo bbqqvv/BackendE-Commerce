@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor  
 @AllArgsConstructor
 public class SizeProductRequest {
     private String sizeName;
