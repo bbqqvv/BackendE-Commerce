@@ -10,9 +10,11 @@ import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.OrderMapper;
 import org.bbqqvv.backendecommerce.repository.*;
 import org.bbqqvv.backendecommerce.service.OrderService;
+import org.bbqqvv.backendecommerce.service.email.EmailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,11 +36,12 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private static final BigDecimal FREE_SHIPPING_THRESHOLD = BigDecimal.valueOf(499000);
     private static final int EXPECTED_DELIVERY_DAYS = 5;
+    private final EmailService emailService;
 
     public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             UserRepository userRepository, ProductRepository productRepository, CartRepository cartRepository,
                             AddressRepository addressRepository, SizeProductVariantRepository sizeProductVariantRepository,
-                            DiscountRepository discountRepository, OrderMapper orderMapper) {
+                            DiscountRepository discountRepository, OrderMapper orderMapper, EmailService emailService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
@@ -48,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
         this.sizeProductVariantRepository = sizeProductVariantRepository;
         this.discountRepository = discountRepository;
         this.orderMapper = orderMapper;
+        this.emailService = emailService;
     }
 
     private User getAuthenticatedUser() {
@@ -64,20 +68,18 @@ public class OrderServiceImpl implements OrderService {
         User user = getAuthenticatedUser();
         Address address = findAddressById(orderRequest.getAddressId());
 
-        // Lấy giỏ hàng của người dùng
         Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
         if (cart.getCartItems().isEmpty()) {
             throw new AppException(ErrorCode.EMPTY_CART);
         }
 
-        // Tạo map sản phẩm để tối ưu hiệu suất
+        // Tính toán giá trị đơn hàng
         Map<Long, Product> productMap = cart.getCartItems().stream()
                 .map(CartItem::getProduct)
                 .distinct()
                 .collect(Collectors.toMap(Product::getId, product -> product));
 
-        // 1️⃣ Tính tổng giá trị đơn hàng trước giảm giá
         BigDecimal orderTotal = cart.getCartItems().stream()
                 .map(cartItem -> {
                     Product product = productMap.get(cartItem.getProduct().getId());
@@ -87,54 +89,39 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-// 2️⃣ Áp dụng giảm giá
         Discount discount = applyDiscount(orderRequest.getDiscountCode(), orderTotal);
         BigDecimal discountAmount = (discount != null) ? calculateDiscountAmount(discount, orderTotal) : BigDecimal.ZERO;
-
-// 3️⃣ Tổng sau khi giảm giá (không được âm)
         BigDecimal totalAfterDiscount = orderTotal.subtract(discountAmount).max(BigDecimal.ZERO);
-
-// 4️⃣ Tính phí ship sau khi giảm giá
         BigDecimal shippingFee = calculateShippingFee(address, totalAfterDiscount);
-
-// 5️⃣ Tổng tiền cuối cùng
         BigDecimal finalTotalAmount = totalAfterDiscount.add(shippingFee);
 
-
-        // Tạo đơn hàng
+        // Tạo và lưu order
         Order order = buildOrder(orderRequest, user, address, shippingFee, discount, discountAmount, finalTotalAmount);
-        orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
 
-        // Lưu danh sách sản phẩm trong đơn hàng
+        // Tạo và lưu orderItems
         List<OrderItem> orderItems = cart.getCartItems().stream()
                 .map(cartItem -> {
                     Product product = findProductById(cartItem.getProduct().getId());
                     SizeProductVariant sizeProductVariant = findSizeProduct(product, cartItem.getSizeName());
 
-                    // Giảm số lượng tồn kho
-                    updateStock(sizeProductVariant, cartItem.getQuantity());
+                    OrderItemRequest itemRequest = new OrderItemRequest();
+                    itemRequest.setQuantity(cartItem.getQuantity());
+                    itemRequest.setColor(cartItem.getColor());
 
-                    return OrderItem.builder()
-                            .order(order)
-                            .product(product)
-                            .sizeName(cartItem.getSizeName())
-                            .quantity(cartItem.getQuantity())
-                            .price(sizeProductVariant.getSizeProduct().getPriceAfterDiscount())
-                            .subtotal(sizeProductVariant.getSizeProduct().getPriceAfterDiscount()
-                                    .multiply(BigDecimal.valueOf(cartItem.getQuantity())))
-                            .color(cartItem.getColor())
-                            .build();
+                    return buildOrderItem(savedOrder, product, sizeProductVariant, itemRequest);
                 }).collect(Collectors.toList());
-
-        order.setOrderItems(orderItems);
         orderItemRepository.saveAll(orderItems);
-
-        // Xóa giỏ hàng sau khi tạo đơn hàng
+        savedOrder.setOrderItems(orderItems);
         cartRepository.deleteByUserId(user.getId());
-
-        return orderMapper.toCartResponse(order);
+        // Gửi email
+        try {
+            emailService.sendOrderConfirmationEmail(savedOrder, user.getEmail());
+        } catch (Exception e) {
+            System.err.println("Failed to send confirmation email: " + e.getMessage());
+        }
+        return orderMapper.toOrderResponse(savedOrder);
     }
-
 
     private Discount applyDiscount(String discountCode, BigDecimal totalAmount) {
         if (discountCode == null || discountCode.isBlank()) {
@@ -191,7 +178,9 @@ public class OrderServiceImpl implements OrderService {
                              BigDecimal totalAmount) {
         Order.OrderBuilder builder = Order.builder()
                 .user(user)
+                .orderCode(generateOrderCode())
                 .recipientName(address.getRecipientName())
+                .phoneNumber(address.getPhoneNumber())
                 .fullAddress(address.getFullAddress())
                 .status(OrderStatus.PENDING)
                 .createdAt(LocalDateTime.now())
@@ -204,7 +193,6 @@ public class OrderServiceImpl implements OrderService {
                 .discountAmount(discountAmount)
                 .totalAmount(totalAmount);
 
-        // Chỉ set discountCode nếu có discount
         if (discount != null) {
             builder.discountCode(discount.getCode());
         }
@@ -212,8 +200,12 @@ public class OrderServiceImpl implements OrderService {
         return builder.build();
     }
 
+    private String generateOrderCode() {
+        return "ORD-" + System.currentTimeMillis();
+    }
 
-    private OrderItem buildOrderItem(Order order, Product product, SizeProductVariant sizeProductVariant, SizeProduct sizeProduct, OrderItemRequest itemRequest) {
+    private OrderItem buildOrderItem(Order order, Product product, SizeProductVariant sizeProductVariant, OrderItemRequest itemRequest) {
+        SizeProduct sizeProduct = sizeProductVariant.getSizeProduct();
         validateStock(sizeProduct, itemRequest.getQuantity());
         updateStock(sizeProductVariant, itemRequest.getQuantity());
 
@@ -222,13 +214,11 @@ public class OrderServiceImpl implements OrderService {
                 .product(product)
                 .sizeName(sizeProduct.getSizeName())
                 .quantity(itemRequest.getQuantity())
-                .price(sizeProduct.getPrice())
-                .subtotal(sizeProduct.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()))) // ✅ Lưu tổng tiền
+                .price(sizeProduct.getPriceAfterDiscount()) // Sử dụng giá sau giảm
+                .subtotal(sizeProduct.getPriceAfterDiscount().multiply(BigDecimal.valueOf(itemRequest.getQuantity())))
                 .color(itemRequest.getColor())
                 .build();
-
     }
-
     private void validateStock(SizeProduct sizeProduct, int quantity) {
         if (sizeProduct.getStockQuantity() < quantity) {
             throw new AppException(ErrorCode.OUT_OF_STOCK);
@@ -268,7 +258,7 @@ public class OrderServiceImpl implements OrderService {
             throw new AppException(ErrorCode.ACCESS_DENIED);
         }
 
-        return orderMapper.toCartResponse(order);
+        return orderMapper.toOrderResponse(order);
     }
 
     @Override
@@ -276,7 +266,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getOrdersByUser() {
         User user = getAuthenticatedUser();
         return orderRepository.findByUserId(user.getId()).stream()
-                .map(orderMapper::toCartResponse)
+                .map(orderMapper::toOrderResponse)
                 .collect(Collectors.toList());
     }
 
@@ -284,7 +274,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll().stream()
-                .map(orderMapper::toCartResponse)
+                .map(orderMapper::toOrderResponse)
                 .collect(Collectors.toList());
     }
 
@@ -293,7 +283,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse updateOrder(Long orderId, OrderRequest orderRequest) {
         Order order = findOrderById(orderId);
         updateOrderDetails(order, orderRequest);
-        return orderMapper.toCartResponse(order);
+        return orderMapper.toOrderResponse(order);
     }
 
     private void updateOrderDetails(Order order, OrderRequest orderRequest) {
@@ -318,7 +308,7 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
 
-        return orderMapper.toCartResponse(order);
+        return orderMapper.toOrderResponse(order);
     }
 
     @Override

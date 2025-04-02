@@ -19,7 +19,9 @@ public class OrderResponse {
     private Long userId;
     private String name;
     private String address;
+    private String phoneNumber;
     private String notes;
+    private String orderCode;
     private String status;
     private PaymentMethod paymentMethod;
     private BigDecimal shippingFee;

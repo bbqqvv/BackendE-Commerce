@@ -28,6 +28,12 @@ public class Order {
     @Column(nullable = false)
     private String recipientName;
 
+    @Column(name = "order_code", unique = true, nullable = false, length = 20)
+    private String orderCode;
+
+    @Column(nullable = false)
+    private String phoneNumber;
+
     @Column(name = "full_address", nullable = false)
     private String fullAddress;
 
