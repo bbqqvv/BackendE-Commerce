@@ -2,7 +2,6 @@ package org.bbqqvv.backendecommerce.service.impl;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.entity.Otp;
 import org.bbqqvv.backendecommerce.entity.User;
@@ -15,21 +14,27 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
 
     private final OtpRepository otpRepository;
     private final UserRepository userRepository;
     private final JavaMailSender mailSender;
     private final PasswordEncoder passwordEncoder;
-
     private static final int OTP_EXPIRATION_MINUTES = 5;
+
+    public OtpServiceImpl(OtpRepository otpRepository, UserRepository userRepository, JavaMailSender mailSender, PasswordEncoder passwordEncoder) {
+        this.otpRepository = otpRepository;
+        this.userRepository = userRepository;
+        this.mailSender = mailSender;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     /**
      * Gửi OTP đến email

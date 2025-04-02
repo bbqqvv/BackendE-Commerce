@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận đơn hàng #<span th:text="${order.id}"></span> | Roway Shop</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .email-wrapper {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .text-primary {
+            color: #000 !important;
+        }
+
+        .alert-success {
+            background-color: #f8f9fa;
+            color: #000;
+            border-color: #d6d8db;
+        }
+
+        .card-header {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .card-body {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .btn {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .btn:hover {
+            background-color: #444;
+            color: #fff;
+        }
+
+        .table {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .table thead {
+            background-color: #000;
+            color: #fff;
+        }
+
+        .table td, .table th {
+            vertical-align: middle;
+        }
+
+        .footer-links {
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .footer-links a {
+            color: #333;
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            color: #000;
+            text-decoration: underline;
+        }
+
+        .footer-contact p {
+            margin: 5px 0;
+        }
+
+        .footer-contact a {
+            color: #333;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="text-center">
+        <img th:src="@{'https://i.ibb.co/vCQ4h4V2/banner-mail.png'}" class="img-fluid" alt="Roway Shop">
+    </div>
+
+    <!-- Order Confirmation -->
+    <div class="alert alert-success text-center mt-4">
+        <h2 class="text-primary">Cảm ơn bạn đã đặt hàng!</h2>
+        <p>Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.</p>
+        <p><strong>Mã đơn hàng:</strong> <span th:text="${order.orderCode}"></span></p>
+    </div>
+
+    <!-- Delivery Info -->
+    <div class="card my-4">
+        <div class="card-header text-white">Dự kiến giao hàng</div>
+        <div class="card-body text-center">
+            <h4 th:text="${#temporals.format(order.expectedDeliveryDate, 'dd/MM/yyyy')}"></h4>
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <h3 class="mt-4 text-primary">Chi tiết đơn hàng</h3>
+    <div class="list-group">
+        <div th:each="item : ${order.orderItems}" class="list-group-item d-flex align-items-center">
+            <img th:src="@{${item.product.mainImage.imageUrl}}" class="rounded me-3" style="width: 80px; height: 80px;" alt="Product">
+            <div>
+                <h5 class="mb-1" th:text="${item.product.name}"></h5>
+                <small th:text="${item.color} + ' | ' + ${item.sizeName}"></small>
+                <p class="mb-0"><strong th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></strong> × <span th:text="${item.quantity}"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <h3 class="mt-4 text-primary">Tổng quan thanh toán</h3>
+    <table class="table">
+        <tbody>
+        <tr>
+            <td>Tạm tính:</td>
+            <td class="text-end" th:text="${#numbers.formatDecimal(order.totalAmount.subtract(order.shippingFee).add(order.discountAmount), 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+        </tr>
+        <tr>
+            <td>Phí vận chuyển:</td>
+            <td class="text-end" th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+        </tr>
+        <tr th:if="${order.discountAmount != null}">
+            <td>Giảm giá:</td>
+            <td class="text-end text-danger" th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+        </tr>
+        <tr class="table-primary">
+            <td><strong>Tổng cộng:</strong></td>
+            <td class="text-end"><strong th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Tracking Button -->
+    <div class="text-center my-4">
+        <a th:href="@{${baseUrl} + '/orders/' + ${order.id}}" class="btn btn-lg">Theo dõi đơn hàng</a>
+    </div>
+
+    <!-- Shipping & Payment Info -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">Địa chỉ giao hàng</div>
+                <div class="card-body">
+                    <p th:text="${order.recipientName}"></p>
+                    <p th:text="${order.phoneNumber}"></p>
+                    <p th:text="${order.fullAddress}"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-dark text-white">Phương thức thanh toán</div>
+                <div class="card-body">
+                    <p th:text="${order.paymentMethod}"></p>
+                    <p th:if="${order.paymentMethod == 'VNPay'}">Mã giao dịch: <strong th:text="${order.transactionId}"></strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-4">
+        <p>Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi:</p>
+        <p>Email: <a href="mailto:support@roway.com">support@roway.com</a> | Hotline: 1900 1234</p>
+        <hr>
+        <p class="text-muted">© 2024 Roway Shop. All rights reserved.</p>
+    </div>
+</div>
+
+</body>
+</html>
