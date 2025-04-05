@@ -1,16 +1,16 @@
 package org.bbqqvv.backendecommerce.controller;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
-import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.CategoryRequest;
 import org.bbqqvv.backendecommerce.dto.response.CategoryResponse;
 import org.bbqqvv.backendecommerce.service.CategoryService;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -32,13 +32,11 @@ public class CategoryController {
 
     // Lấy danh sách tất cả các danh mục
     @GetMapping
-    public ApiResponse<PageResponse<CategoryResponse>> getAllCategories(@PageableDefault(size = 10) Pageable pageable) {
-        // Lấy dữ liệu từ service
-        PageResponse<CategoryResponse> categoryPage = categoryService.getAllCategories(pageable);
-        return ApiResponse.<PageResponse<CategoryResponse>>builder()
+    public ApiResponse<List<CategoryResponse>> getAllCategories() {
+        return ApiResponse.<List<CategoryResponse>>builder()
                 .success(true)
                 .message("List of categories retrieved successfully")
-                .data(categoryPage)  // Trả về PageResponse thay vì Page
+                .data(categoryService.getAllCategories())
                 .build();
     }
 
