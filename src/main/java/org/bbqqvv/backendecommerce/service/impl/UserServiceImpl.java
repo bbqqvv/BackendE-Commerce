@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ChangePasswordRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserUpdateRequest;
@@ -16,10 +17,13 @@ import org.bbqqvv.backendecommerce.mapper.UserMapper;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.UserService;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import static org.bbqqvv.backendecommerce.util.PagingUtil.toPageResponse;
+
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
@@ -57,25 +61,17 @@ public class UserServiceImpl implements UserService {
         );
         return userMapper.toUserResponse(user);
     }
-
-
-
     @Override
     public User getUserByUsernameEntity(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
-
     @Cacheable(value = "users", key = "'allUsers'")
     @Override
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(userMapper::toUserResponse)
-                .collect(Collectors.toList());
+    public PageResponse<UserResponse> getAllUsers(Pageable pageable) {
+        Page<User> userPage = userRepository.findAll(pageable);
+        return toPageResponse(userPage, userMapper::toUserResponse);
     }
-
-
     @Override
     public UserResponse updateUser(Long id, UserCreationRequest request) {
         // Kiểm tra người dùng có tồn tại không

@@ -204,7 +204,6 @@ public class CartServiceImpl implements CartService {
         return cartMapper.toCartResponse(cart);
     }
 
-
     @Override
     @Transactional
     public void clearCart() {

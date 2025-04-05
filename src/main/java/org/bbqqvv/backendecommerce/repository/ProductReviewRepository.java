@@ -1,17 +1,16 @@
 package org.bbqqvv.backendecommerce.repository;
 
 import org.bbqqvv.backendecommerce.entity.ProductReview;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface ProductReviewRepository extends JpaRepository<ProductReview, Long> {
-    Optional<ProductReview> findByProductIdAndUserId(Long id, Long id1);
+    Optional<ProductReview> findByProductIdAndUserId(Long productId, Long userId);
 
-    List<ProductReview> findByProductId(Long productId);
+    Page<ProductReview> findByProductId(Long productId, Pageable pageable);
 
-    List<ProductReview> findByUserId(Long id);
+    Page<ProductReview> findByUserId(Long userId, Pageable pageable);
 }

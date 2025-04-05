@@ -25,7 +25,7 @@ public class ProductResponse {
     private boolean active;
     private int salePercentage;
     private Set<String> tags;
-    private Long categoryId;
+    private String categoryName;
     private String mainImageUrl;
     private List<String> secondaryImageUrls;
     private List<String> descriptionImageUrls;

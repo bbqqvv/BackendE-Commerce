@@ -54,7 +54,7 @@ public class ProductController {
 
     // Lấy danh sách tất cả sản phẩm với phân trang
     @GetMapping
-    public ApiResponse<PageResponse<ProductResponse>> getAllProducts(@PageableDefault(size = 10) Pageable pageable) {
+    public ApiResponse<PageResponse<ProductResponse>> getAllProducts(@PageableDefault(page = 0, size = 10) Pageable pageable) {
         PageResponse<ProductResponse> productPage = productService.getAllProducts(pageable);
         return ApiResponse.<PageResponse<ProductResponse>>builder()
                 .success(true)
@@ -104,10 +104,8 @@ public class ProductController {
     @GetMapping("/search")
     public ApiResponse<PageResponse<ProductResponse>> searchProductsByName(
             @RequestParam String name,
-            @PageableDefault(size = 9, page = 0) Pageable pageable) {  // ✅ Spring tự động tạo Pageable
-
+            @PageableDefault(page = 0,size = 9) Pageable pageable) {
         PageResponse<ProductResponse> productPage = productService.searchProductsByName(name, pageable);
-
         return ApiResponse.<PageResponse<ProductResponse>>builder()
                 .success(true)
                 .message("Products retrieved successfully")

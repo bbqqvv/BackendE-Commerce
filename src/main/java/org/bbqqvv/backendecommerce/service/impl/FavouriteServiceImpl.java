@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.response.FavouriteResponse;
 import org.bbqqvv.backendecommerce.entity.Favourite;
 import org.bbqqvv.backendecommerce.entity.Product;
@@ -15,11 +16,12 @@ import org.bbqqvv.backendecommerce.repository.FavouriteRepository;
 import org.bbqqvv.backendecommerce.repository.ProductRepository;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.FavouriteService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import static org.bbqqvv.backendecommerce.util.PagingUtil.toPageResponse;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -89,18 +91,12 @@ public class FavouriteServiceImpl implements FavouriteService {
     }
 
     @Override
-    public List<FavouriteResponse> getUserFavourites() {
+    public PageResponse<FavouriteResponse> getUserFavourites(Pageable pageable) {
         User user = getAuthenticatedUser();
 
-        List<Favourite> favourites = favouriteRepository.findByUserId(user.getId());
+        Page<Favourite> favouritesPage = favouriteRepository.findByUserId(user.getId(), pageable);
 
-        return favourites.stream()
-                .map(favourite -> {
-                    FavouriteResponse response = favouriteMapper.toFavouriteResponse(favourite);
-                    response.setStockStatus(getStockStatus(favourite.getProduct())); // ✅ Gán stockStatus
-                    return response;
-                })
-                .collect(Collectors.toList());
+        return toPageResponse(favouritesPage, favouriteMapper::toFavouriteResponse);
     }
 
     private User getAuthenticatedUser() {

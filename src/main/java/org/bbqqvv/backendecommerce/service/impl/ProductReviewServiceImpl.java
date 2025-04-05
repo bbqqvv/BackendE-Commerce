@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductReviewRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductReviewResponse;
 import org.bbqqvv.backendecommerce.entity.*;
@@ -17,12 +18,15 @@ import org.bbqqvv.backendecommerce.repository.ProductReviewRepository;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.ProductReviewService;
 import org.bbqqvv.backendecommerce.service.img.FileStorageService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static org.bbqqvv.backendecommerce.util.PagingUtil.toPageResponse;
 
 @Service
 @Slf4j
@@ -90,26 +94,18 @@ public class ProductReviewServiceImpl implements ProductReviewService {
         return productReviewMapper.toResponse(productReviewRepository.save(review));
     }
     @Override
-    public List<ProductReviewResponse> getReviewsByProduct(Long productId) {
+    public PageResponse<ProductReviewResponse> getReviewsByProduct(Long productId, Pageable pageable) {
         productRepository.findById(productId)
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
-
-        List<ProductReview> reviews = productReviewRepository.findByProductId(productId);
-
-        return reviews.stream()
-                .map(productReviewMapper::toResponse)
-                .collect(Collectors.toList());
+        Page<ProductReview> reviewPage = productReviewRepository.findByProductId(productId, pageable);
+        return toPageResponse(reviewPage, productReviewMapper::toResponse);
     }
 
     @Override
-    public List<ProductReviewResponse> getReviewsByUser() {
+    public PageResponse<ProductReviewResponse> getReviewsByUser(Pageable pageable) {
         User user = getAuthenticatedUser();
-
-        List<ProductReview> reviews = productReviewRepository.findByUserId(user.getId());
-
-        return reviews.stream()
-                .map(productReviewMapper::toResponse)
-                .collect(Collectors.toList());
+        Page<ProductReview> reviewPage = productReviewRepository.findByUserId(user.getId(), pageable);
+        return toPageResponse(reviewPage, productReviewMapper::toResponse);
     }
 
     @Override

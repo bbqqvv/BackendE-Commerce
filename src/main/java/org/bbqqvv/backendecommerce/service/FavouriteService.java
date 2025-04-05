@@ -1,11 +1,11 @@
 package org.bbqqvv.backendecommerce.service;
 
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.response.FavouriteResponse;
-
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 public interface FavouriteService {
-    FavouriteResponse addFavourite(Long productId);  // Sử dụng ID người dùng và sản phẩm để thêm yêu thích
-    FavouriteResponse removeFavourite(Long favouriteId);  // Sử dụng ID người dùng và sản phẩm để xóa yêu thích
-    List<FavouriteResponse> getUserFavourites();  // Lấy danh sách yêu thích của người dùng
+    FavouriteResponse addFavourite(Long productId);
+    FavouriteResponse removeFavourite(Long favouriteId);
+    PageResponse<FavouriteResponse> getUserFavourites(Pageable pageable);
 }

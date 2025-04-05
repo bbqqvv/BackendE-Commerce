@@ -3,16 +3,16 @@ package org.bbqqvv.backendecommerce.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ChangePasswordRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserCreationRequest;
 import org.bbqqvv.backendecommerce.dto.request.UserUpdateRequest;
 import org.bbqqvv.backendecommerce.dto.response.UserResponse;
 import org.bbqqvv.backendecommerce.dto.response.UserUpdateResponse;
 import org.bbqqvv.backendecommerce.service.UserService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -57,10 +57,9 @@ public class UserController {
     // Lấy tất cả người dùng
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<UserResponse>> getAllUsers() {
-        List<UserResponse> userResponses = userService.getAllUsers();
-        return ApiResponse.<List<UserResponse>>builder()
-
+    public ApiResponse<PageResponse<UserResponse>> getAllUsers(Pageable pageable) {
+        PageResponse<UserResponse> userResponses = userService.getAllUsers(pageable);
+        return ApiResponse.<PageResponse<UserResponse>>builder()
                 .success(true)
                 .message("User list retrieved successfully")
                 .data(userResponses)

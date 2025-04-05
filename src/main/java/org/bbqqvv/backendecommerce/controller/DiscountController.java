@@ -3,11 +3,14 @@ package org.bbqqvv.backendecommerce.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.DiscountPreviewRequest;
 import org.bbqqvv.backendecommerce.dto.request.DiscountRequest;
 import org.bbqqvv.backendecommerce.dto.response.DiscountPreviewResponse;
 import org.bbqqvv.backendecommerce.dto.response.DiscountResponse;
 import org.bbqqvv.backendecommerce.service.DiscountService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -98,23 +101,26 @@ public class DiscountController {
     }
 
     @GetMapping
-    public ApiResponse<List<DiscountResponse>> getAllDiscounts() {
-        List<DiscountResponse> discountResponses = discountService.getAllDiscounts();
-        return ApiResponse.<List<DiscountResponse>>builder()
+    public ApiResponse<PageResponse<DiscountResponse>> getAllDiscounts(@PageableDefault(size = 10) Pageable pageable) {
+        PageResponse<DiscountResponse> discountResponses = discountService.getAllDiscounts(pageable);
+        return ApiResponse.<PageResponse<DiscountResponse>>builder()
                 .success(true)
                 .data(discountResponses)
                 .message("List of discounts retrieved successfully.")
                 .build();
     }
+
     // 📌 Lấy danh sách mã giảm giá của user hiện tại
     @GetMapping("/me")
-    public ApiResponse<List<DiscountResponse>> getUserDiscountCodes() {
-        return ApiResponse.<List<DiscountResponse>>builder()
+    public ApiResponse<PageResponse<DiscountResponse>> getUserDiscountCodes(@PageableDefault(size = 10) Pageable pageable) {
+        PageResponse<DiscountResponse> discountResponses = discountService.getCurrentUserDiscount(pageable);
+        return ApiResponse.<PageResponse<DiscountResponse>>builder()
                 .success(true)
                 .message("User's discount codes retrieved successfully")
-                .data(discountService.getCurrentUserDiscount())
+                .data(discountResponses)
                 .build();
     }
+
 
     // 📌 Xem trước số tiền giảm giá trước khi đặt hàng
     @PostMapping("/preview-discount")

@@ -16,7 +16,7 @@ public interface ProductMapper {
     @Mapping(source = "mainImageUrl", target = "mainImage")
     @Mapping(source = "tags", target = "tags", qualifiedByName = "mapTagNamesToTags") // ✨ Convert Set<String> → Set<Tag>
     Product toProduct(ProductRequest productRequest);
-    @Mapping(source = "category.id", target = "categoryId")
+    @Mapping(source = "category.name", target = "categoryName")
     @Mapping(source = "mainImage.imageUrl", target = "mainImageUrl")
     @Mapping(source = "slug", target = "slug")
     @Mapping(source = "secondaryImages", target = "secondaryImageUrls", qualifiedByName = "mapSecondaryImageUrls")

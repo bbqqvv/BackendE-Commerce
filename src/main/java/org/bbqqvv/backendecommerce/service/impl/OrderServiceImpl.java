@@ -1,6 +1,7 @@
 package org.bbqqvv.backendecommerce.service.impl;
 
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.OrderItemRequest;
 import org.bbqqvv.backendecommerce.dto.request.OrderRequest;
 import org.bbqqvv.backendecommerce.dto.response.OrderResponse;
@@ -11,6 +12,9 @@ import org.bbqqvv.backendecommerce.mapper.OrderMapper;
 import org.bbqqvv.backendecommerce.repository.*;
 import org.bbqqvv.backendecommerce.service.OrderService;
 import org.bbqqvv.backendecommerce.service.email.EmailService;
+import org.bbqqvv.backendecommerce.util.PagingUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +41,6 @@ public class OrderServiceImpl implements OrderService {
     private static final BigDecimal FREE_SHIPPING_THRESHOLD = BigDecimal.valueOf(499000);
     private static final int EXPECTED_DELIVERY_DAYS = 5;
     private final EmailService emailService;
-
     public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             UserRepository userRepository, ProductRepository productRepository, CartRepository cartRepository,
                             AddressRepository addressRepository, SizeProductVariantRepository sizeProductVariantRepository,
@@ -260,23 +263,21 @@ public class OrderServiceImpl implements OrderService {
 
         return orderMapper.toOrderResponse(order);
     }
-
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getOrdersByUser() {
+    public PageResponse<OrderResponse> getOrdersByUser(Pageable pageable) {
         User user = getAuthenticatedUser();
-        return orderRepository.findByUserId(user.getId()).stream()
-                .map(orderMapper::toOrderResponse)
-                .collect(Collectors.toList());
+        Page<Order> orderPage = orderRepository.findByUserId(user.getId(), pageable);
+        return PagingUtil.toPageResponse(orderPage, orderMapper::toOrderResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream()
-                .map(orderMapper::toOrderResponse)
-                .collect(Collectors.toList());
+    public PageResponse<OrderResponse> getAllOrders(Pageable pageable) {
+        Page<Order> orderPage = orderRepository.findAll(pageable);
+        return PagingUtil.toPageResponse(orderPage, orderMapper::toOrderResponse);
     }
+
 
     @Override
     @Transactional

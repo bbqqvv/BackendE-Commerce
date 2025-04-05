@@ -1,16 +1,16 @@
 package org.bbqqvv.backendecommerce.service;
 
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.CategoryRequest;
 import org.bbqqvv.backendecommerce.dto.response.CategoryResponse;
-
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 public interface CategoryService {
     CategoryResponse createCategory(CategoryRequest categoryDto);
 
     CategoryResponse getCategoryById(Long id);
 
-    List<CategoryResponse> getAllCategories();
+    PageResponse<CategoryResponse> getAllCategories(Pageable pageable);
 
     CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest);
 

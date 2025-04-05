@@ -3,12 +3,13 @@ package org.bbqqvv.backendecommerce.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductReviewRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductReviewResponse;
 import org.bbqqvv.backendecommerce.service.ProductReviewService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products-review")
@@ -27,28 +28,26 @@ public class ProductReviewController {
                 .message("Review added/updated successfully")
                 .build();
     }
-
-    /**
-     * Lấy danh sách đánh giá theo sản phẩm
-     */
     @GetMapping("/product/{productId}")
-    public ApiResponse<List<ProductReviewResponse>> getReviewsByProduct(@PathVariable Long productId) {
-        return ApiResponse.<List<ProductReviewResponse>>builder()
+    public ApiResponse<PageResponse<ProductReviewResponse>> getReviewsByProduct(
+            @PathVariable Long productId,
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+        PageResponse<ProductReviewResponse> response = productReviewService.getReviewsByProduct(productId, pageable);
+        return ApiResponse.<PageResponse<ProductReviewResponse>>builder()
                 .success(true)
-                .data(productReviewService.getReviewsByProduct(productId))
                 .message("Reviews retrieved successfully")
+                .data(response)
                 .build();
     }
 
-    /**
-     * Lấy danh sách đánh giá của người dùng hiện tại
-     */
     @GetMapping("/user")
-    public ApiResponse<List<ProductReviewResponse>> getReviewsByUser() {
-        return ApiResponse.<List<ProductReviewResponse>>builder()
+    public ApiResponse<PageResponse<ProductReviewResponse>> getReviewsByUser(
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+        PageResponse<ProductReviewResponse> response = productReviewService.getReviewsByUser(pageable);
+        return ApiResponse.<PageResponse<ProductReviewResponse>>builder()
                 .success(true)
-                .data(productReviewService.getReviewsByUser())
                 .message("User reviews retrieved successfully")
+                .data(response)
                 .build();
     }
 

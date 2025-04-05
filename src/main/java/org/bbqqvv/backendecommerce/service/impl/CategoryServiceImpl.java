@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.ImgBBConfig;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.CategoryRequest;
 import org.bbqqvv.backendecommerce.dto.response.CategoryResponse;
 import org.bbqqvv.backendecommerce.entity.Category;
@@ -14,6 +15,9 @@ import org.bbqqvv.backendecommerce.mapper.CategoryMapper;
 import org.bbqqvv.backendecommerce.mapper.SizeMapper;
 import org.bbqqvv.backendecommerce.repository.CategoryRepository;
 import org.bbqqvv.backendecommerce.service.CategoryService;
+import org.bbqqvv.backendecommerce.util.PagingUtil;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,11 +83,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<CategoryResponse> getAllCategories() {
-        return categoryRepository.findAll().stream()
-                .map(categoryMapper::categoryToCategoryResponse)
-                .collect(Collectors.toList());
+    public PageResponse<CategoryResponse> getAllCategories(Pageable pageable) {
+        Page<Category> categoryPage = categoryRepository.findAll(pageable);
+        return PagingUtil.toPageResponse(categoryPage, categoryMapper::categoryToCategoryResponse);
     }
+
     @Override
     public CategoryResponse updateCategory(Long id, CategoryRequest categoryRequest) {
         try {

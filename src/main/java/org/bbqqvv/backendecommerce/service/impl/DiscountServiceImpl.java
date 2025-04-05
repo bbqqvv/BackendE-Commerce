@@ -1,6 +1,7 @@
 package org.bbqqvv.backendecommerce.service.impl;
 
 import org.bbqqvv.backendecommerce.config.jwt.SecurityUtils;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.DiscountPreviewRequest;
 import org.bbqqvv.backendecommerce.dto.request.DiscountRequest;
 import org.bbqqvv.backendecommerce.dto.response.DiscountPreviewResponse;
@@ -13,6 +14,8 @@ import org.bbqqvv.backendecommerce.mapper.DiscountPreviewMapper;
 import org.bbqqvv.backendecommerce.repository.*;
 import org.bbqqvv.backendecommerce.service.CartService;
 import org.bbqqvv.backendecommerce.service.DiscountService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.bbqqvv.backendecommerce.util.PagingUtil.toPageResponse;
 
 @Service
 @Transactional
@@ -166,12 +171,11 @@ private final CartService cartService;
 
     @Override
     @Transactional(readOnly = true)
-    public List<DiscountResponse> getAllDiscounts() {
-        return discountRepository.findAll()
-                .stream()
-                .map(discountMapper::toDiscountResponse)
-                .toList();
+    public PageResponse<DiscountResponse> getAllDiscounts(Pageable pageable) {
+        Page<Discount> discountPage = discountRepository.findAll(pageable);
+        return toPageResponse(discountPage, discountMapper::toDiscountResponse);
     }
+
 
     @Override
     public DiscountResponse updateDiscount(Long id, DiscountRequest request) {
@@ -280,18 +284,12 @@ private final CartService cartService;
     }
 
     @Override
-    public List<DiscountResponse> getCurrentUserDiscount() {
-        User currentUser = getAuthenticatedUser(); // Lấy thông tin người dùng hiện tại
-
-        // Truy vấn danh sách giảm giá dành riêng cho user
-        List<Discount> discounts = discountUserRepository.findDiscountsByUserId(currentUser.getId());
-
-        // Convert sang DTO và trả về danh sách
-        return discounts.stream()
-                .map(discountMapper::toDiscountResponse)
-                .toList();
+    @Transactional(readOnly = true)
+    public PageResponse<DiscountResponse> getCurrentUserDiscount(Pageable pageable) {
+        User currentUser = getAuthenticatedUser();
+        Page<Discount> discountPage = discountUserRepository.findDiscountsByUserId(currentUser.getId(), pageable);
+        return toPageResponse(discountPage, discountMapper::toDiscountResponse);
     }
-
 
 
     private User getAuthenticatedUser() {

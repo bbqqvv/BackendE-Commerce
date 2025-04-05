@@ -3,13 +3,14 @@ package org.bbqqvv.backendecommerce.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
+import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.OrderRequest;
 import org.bbqqvv.backendecommerce.dto.response.OrderResponse;
 import org.bbqqvv.backendecommerce.service.OrderService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -39,25 +40,26 @@ public class OrderController {
 
     // 📌 Lấy danh sách đơn hàng của chính người dùng (không cần userId)
     @GetMapping("/me")
-    public ApiResponse<List<OrderResponse>> getMyOrders() {
-        return ApiResponse.<List<OrderResponse>>builder()
+    public ApiResponse<PageResponse<OrderResponse>> getMyOrders(@PageableDefault(page = 0, size = 10) Pageable pageable) {
+        PageResponse<OrderResponse> orderPage = orderService.getOrdersByUser(pageable);
+        return ApiResponse.<PageResponse<OrderResponse>>builder()
                 .success(true)
                 .message("User's orders retrieved successfully")
-                .data(orderService.getOrdersByUser()) // 🔥 Không cần truyền userId
+                .data(orderPage)
                 .build();
     }
 
     // 📌 Lấy tất cả đơn hàng (dành cho admin)
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<OrderResponse>> getAllOrders() {
-        return ApiResponse.<List<OrderResponse>>builder()
+    public ApiResponse<PageResponse<OrderResponse>> getAllOrders(@PageableDefault(page = 0, size = 10) Pageable pageable) {
+        PageResponse<OrderResponse> orderPage = orderService.getAllOrders(pageable);
+        return ApiResponse.<PageResponse<OrderResponse>>builder()
                 .success(true)
                 .message("All orders retrieved successfully")
-                .data(orderService.getAllOrders())
+                .data(orderPage)
                 .build();
     }
-
     // 📌 Cập nhật đơn hàng
     @PutMapping("/{id}")
     public ApiResponse<OrderResponse> updateOrder(@PathVariable Long id, @RequestBody @Valid OrderRequest orderRequest) {
