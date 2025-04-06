@@ -96,8 +96,13 @@ public class FavouriteServiceImpl implements FavouriteService {
 
         Page<Favourite> favouritesPage = favouriteRepository.findByUserId(user.getId(), pageable);
 
-        return toPageResponse(favouritesPage, favouriteMapper::toFavouriteResponse);
+        return toPageResponse(favouritesPage, favourite -> {
+            FavouriteResponse response = favouriteMapper.toFavouriteResponse(favourite);
+            response.setStockStatus(getStockStatus(favourite.getProduct()));
+            return response;
+        });
     }
+
 
     private User getAuthenticatedUser() {
         String username = SecurityUtils.getCurrentUserLogin()

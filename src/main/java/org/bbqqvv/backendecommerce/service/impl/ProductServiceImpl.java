@@ -1,5 +1,6 @@
 package org.bbqqvv.backendecommerce.service.impl;
 
+import jakarta.persistence.criteria.Join;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -23,14 +24,12 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -155,6 +154,80 @@ public class ProductServiceImpl implements ProductService {
                 .build();
     }
 
+    @Override
+    public PageResponse<ProductResponse> filterProducts(Map<String, String> allParams, Pageable pageable) {
+        // Xây dựng Specification để lọc sản phẩm
+        Specification<Product> spec = Specification.where(null);
+
+        // Lọc theo danh mục (category slug)
+        if (allParams.containsKey("category")) {
+            String categorySlug = allParams.get("category");
+            spec = spec.and((root, query, criteriaBuilder) -> {
+                Join<Product, Category> categoryJoin = root.join("category");
+                return criteriaBuilder.equal(categoryJoin.get("slug"), categorySlug);
+            });
+        }
+
+        // Lọc theo tag
+        if (allParams.containsKey("tag")) {
+            String tagName = allParams.get("tag");
+            spec = spec.and((root, query, criteriaBuilder) -> {
+                Join<Product, Tag> tagJoin = root.join("tags");
+                return criteriaBuilder.equal(tagJoin.get("name"), tagName);
+            });
+        }
+
+        // Lọc theo khoảng giá
+        if (allParams.containsKey("minPrice") || allParams.containsKey("maxPrice")) {
+            BigDecimal minPrice = allParams.containsKey("minPrice")
+                    ? new BigDecimal(allParams.get("minPrice"))
+                    : BigDecimal.ZERO;
+            BigDecimal maxPrice = allParams.containsKey("maxPrice")
+                    ? new BigDecimal(allParams.get("maxPrice"))
+                    : new BigDecimal(Long.MAX_VALUE);
+
+            spec = spec.and((root, query, criteriaBuilder) -> {
+                // Join với variants và size products để lấy giá
+                Join<Product, ProductVariant> variantJoin = root.join("variants");
+                Join<ProductVariant, SizeProductVariant> sizeVariantJoin = variantJoin.join("productVariantSizes");
+                Join<SizeProductVariant, SizeProduct> sizeJoin = sizeVariantJoin.join("sizeProduct");
+
+                return criteriaBuilder.between(sizeJoin.get("price"), minPrice, maxPrice);
+            });
+        }
+
+        // Lọc theo màu sắc
+        if (allParams.containsKey("color")) {
+            String color = allParams.get("color");
+            spec = spec.and((root, query, criteriaBuilder) -> {
+                Join<Product, ProductVariant> variantJoin = root.join("variants");
+                return criteriaBuilder.equal(variantJoin.get("color"), color);
+            });
+        }
+
+        // Lọc theo kích thước
+        if (allParams.containsKey("size")) {
+            String sizeName = allParams.get("size");
+            spec = spec.and((root, query, criteriaBuilder) -> {
+                Join<Product, ProductVariant> variantJoin = root.join("variants");
+                Join<ProductVariant, SizeProductVariant> sizeVariantJoin = variantJoin.join("productVariantSizes");
+                Join<SizeProductVariant, SizeProduct> sizeJoin = sizeVariantJoin.join("sizeProduct");
+                return criteriaBuilder.equal(sizeJoin.get("sizeName"), sizeName);
+            });
+        }
+
+        // Lọc theo trạng thái sale
+        if (allParams.containsKey("onSale") && Boolean.parseBoolean(allParams.get("onSale"))) {
+            spec = spec.and((root, query, criteriaBuilder) ->
+                    criteriaBuilder.greaterThan(root.get("salePercentage"), 0));
+        }
+
+        // Thực hiện truy vấn với các điều kiện lọc
+        Page<Product> filteredProducts = productRepository.findAll(spec, pageable);
+
+        // Chuyển đổi kết quả thành PageResponse
+        return toPageResponse(filteredProducts);
+    }
 
     private Category getCategoryById(Long categoryId) {
         return categoryRepository.findById(categoryId)

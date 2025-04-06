@@ -28,7 +28,7 @@ public class OrderResponse {
     private String discountCode;
     private BigDecimal discountAmount;
     private LocalDate expectedDeliveryDate;
-    private List<OrderItemResponse> items;
+    private List<OrderItemResponse> orderItems;
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

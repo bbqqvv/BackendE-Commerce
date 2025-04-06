@@ -9,7 +9,7 @@ import org.mapstruct.Mapping;
 public interface OrderMapper {
     @Mapping(target = "name", source = "recipientName")
     @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "items", source = "orderItems")
+    @Mapping(target = "orderItems", source = "orderItems")
     @Mapping(target = "address", source = "fullAddress")
     @Mapping(target = "discountCode", source = "discount.code", defaultValue = "")
     @Mapping(target = "discountAmount", source = "discountAmount", defaultValue = "0")

@@ -11,6 +11,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -112,4 +114,20 @@ public class ProductController {
                 .data(productPage)
                 .build();
     }
+
+    @GetMapping("/filter")
+    public ApiResponse<PageResponse<ProductResponse>> filterProducts(
+            @RequestParam Map<String, String> allParams,
+            @PageableDefault(page = 0, size = 9) Pageable pageable) {
+
+        // Truyền các tham số qua Service để lọc
+        PageResponse<ProductResponse> productPage = productService.filterProducts(allParams, pageable);
+
+        return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .success(true)
+                .message("Products filtered successfully")
+                .data(productPage)
+                .build();
+    }
+
 }
