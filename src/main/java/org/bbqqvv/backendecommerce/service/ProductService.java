@@ -5,8 +5,6 @@ import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Map;
-
 public interface ProductService {
     ProductResponse createProduct(ProductRequest productRequest);
     ProductResponse getProductById(Long id);
@@ -16,5 +14,4 @@ public interface ProductService {
     ProductResponse updateProduct(Long id, ProductRequest productRequest);
     boolean deleteProduct(Long id);
     PageResponse<ProductResponse> searchProductsByName(String name, Pageable pageable);
-    PageResponse<ProductResponse> filterProducts(Map<String, String> allParams, Pageable pageable);
 }
