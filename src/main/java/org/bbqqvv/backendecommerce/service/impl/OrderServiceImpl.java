@@ -252,8 +252,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderResponse getOrderById(Long orderId) {
-        Order order = findOrderById(orderId);
+    public OrderResponse getOrderByCode(String orderCode) {
+        Order order = findOrderByCode(orderCode);  // Sử dụng phương thức tìm kiếm theo mã đơn hàng
         User user = getAuthenticatedUser();
 
         // Chỉ cho phép admin hoặc chủ sở hữu đơn hàng truy cập
@@ -263,6 +263,12 @@ public class OrderServiceImpl implements OrderService {
 
         return orderMapper.toOrderResponse(order);
     }
+
+    private Order findOrderByCode(String orderCode) {
+        return orderRepository.findByOrderCode(orderCode)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<OrderResponse> getOrdersByUser(Pageable pageable) {

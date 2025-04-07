@@ -13,4 +13,6 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
     Page<ProductReview> findByProductId(Long productId, Pageable pageable);
 
     Page<ProductReview> findByUserId(Long userId, Pageable pageable);
+
+    Optional<ProductReview> findByOrderItemId(Long orderItemId);
 }

@@ -26,6 +26,10 @@ public class ProductReview {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @ManyToOne
+    @JoinColumn(name = "order_item_id", nullable = false)
+    private OrderItem orderItem;
+
     @OneToMany(mappedBy = "productReview", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductReviewImage> images = new ArrayList<>();
 

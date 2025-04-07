@@ -13,15 +13,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+
 @RestController
-@RequestMapping("/api/filter")
+@RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class FilterController {
     private final FilterService filterService;
-    @GetMapping()
+
+    @GetMapping("/filter")
     public ApiResponse<PageResponse<ProductResponse>> filterProducts(
             @RequestParam Map<String, String> allParams,
             @PageableDefault(page = 0, size = 9) Pageable pageable) {
+        allParams.remove("page");
+        allParams.remove("size");
         // Truyền các tham số qua Service để lọc
         PageResponse<ProductResponse> productPage = filterService.filterProducts(allParams, pageable);
 

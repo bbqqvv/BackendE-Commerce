@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductReviewRequest {
     private Long productId;
+    private Long orderItemId;
     private int rating;
     private String reviewText;
     private List<MultipartFile> imageFiles;

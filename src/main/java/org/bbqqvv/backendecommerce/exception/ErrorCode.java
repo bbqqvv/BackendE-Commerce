@@ -18,6 +18,10 @@ public enum ErrorCode {
     PASSWORDS_DO_NOT_MATCH(1008, "Passwords do not match", HttpStatus.BAD_REQUEST),
     INVALID_OLD_PASSWORD(1009, "Old password is incorrect", HttpStatus.BAD_REQUEST),
     ResourceNotFoundException(1010, "Resource not found", HttpStatus.NOT_FOUND),
+    ORDER_ITEM_NOT_FOUND(1011, "Order item not found", HttpStatus.NOT_FOUND),
+    REVIEW_ALREADY_EXISTS(1012, "Review already exists", HttpStatus.CONFLICT),
+    FORBIDDEN(1013, "Forbidden", HttpStatus.FORBIDDEN),
+    REVIEW_EDIT_EXPIRED(1014, "Review expired", HttpStatus.CONFLICT),
     // 2000 Series - Product Errors
     PRODUCT_NOT_FOUND(2001, "Product not found with ID: {0}", HttpStatus.NOT_FOUND),
     DUPLICATE_PRODUCT_CODE(2002, "Product code already exists", HttpStatus.BAD_REQUEST),

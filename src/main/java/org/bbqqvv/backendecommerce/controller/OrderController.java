@@ -29,14 +29,15 @@ public class OrderController {
     }
 
     // 📌 Lấy thông tin đơn hàng theo ID
-    @GetMapping("/{id}")
-    public ApiResponse<OrderResponse> getOrderById(@PathVariable Long id) {
+    @GetMapping("/{orderCode}")
+    public ApiResponse<OrderResponse> getOrderByCode(@PathVariable String orderCode) {
         return ApiResponse.<OrderResponse>builder()
                 .success(true)
                 .message("Order details retrieved successfully")
-                .data(orderService.getOrderById(id))
+                .data(orderService.getOrderByCode(orderCode))  
                 .build();
     }
+
 
     // 📌 Lấy danh sách đơn hàng của chính người dùng (không cần userId)
     @GetMapping("/me")

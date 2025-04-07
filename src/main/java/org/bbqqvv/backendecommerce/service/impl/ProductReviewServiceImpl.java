@@ -12,10 +12,7 @@ import org.bbqqvv.backendecommerce.entity.*;
 import org.bbqqvv.backendecommerce.exception.AppException;
 import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.ProductReviewMapper;
-import org.bbqqvv.backendecommerce.repository.OrderRepository;
-import org.bbqqvv.backendecommerce.repository.ProductRepository;
-import org.bbqqvv.backendecommerce.repository.ProductReviewRepository;
-import org.bbqqvv.backendecommerce.repository.UserRepository;
+import org.bbqqvv.backendecommerce.repository.*;
 import org.bbqqvv.backendecommerce.service.ProductReviewService;
 import org.bbqqvv.backendecommerce.service.img.FileStorageService;
 import org.springframework.data.domain.Page;
@@ -32,18 +29,27 @@ import static org.bbqqvv.backendecommerce.util.PagingUtil.toPageResponse;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProductReviewServiceImpl implements ProductReviewService {
+
     ProductReviewRepository productReviewRepository;
     ProductRepository productRepository;
     UserRepository userRepository;
     ProductReviewMapper productReviewMapper;
-    OrderRepository orderRepository;
-    FileStorageService fileStorageService; // Thêm vào đây
-    public ProductReviewServiceImpl(ProductReviewRepository productReviewRepository, ProductRepository productRepository, ProductReviewMapper productReviewMapper, UserRepository userRepository, OrderRepository orderRepository, FileStorageService fileStorageService) {
+    OrderItemRepository orderItemRepository;
+    FileStorageService fileStorageService;
+
+    public ProductReviewServiceImpl(
+            ProductReviewRepository productReviewRepository,
+            ProductRepository productRepository,
+            ProductReviewMapper productReviewMapper,
+            UserRepository userRepository,
+            OrderItemRepository orderItemRepository,
+            FileStorageService fileStorageService
+    ) {
         this.productReviewRepository = productReviewRepository;
         this.productRepository = productRepository;
         this.productReviewMapper = productReviewMapper;
         this.userRepository = userRepository;
-        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
         this.fileStorageService = fileStorageService;
     }
 
@@ -57,42 +63,78 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     @Transactional
     public ProductReviewResponse addOrUpdateReview(ProductReviewRequest reviewRequest) {
         User user = getAuthenticatedUser();
-        Product product = productRepository.findById(reviewRequest.getProductId())
-                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // 🔥 Kiểm tra nếu user đã mua hàng và đơn hàng đã hoàn thành
-        boolean hasCompletedOrder = orderRepository.existsByUserIdAndOrderItems_Product_IdAndStatus(
-                user.getId(), product.getId(), OrderStatus.DELIVERED);
+        // Lấy orderItem từ ID
+        OrderItem orderItem = orderItemRepository.findById(reviewRequest.getOrderItemId())
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
 
-        if (!hasCompletedOrder) {
+        Product product = orderItem.getProduct();
+        Order order = orderItem.getOrder();
+
+        // Kiểm tra quyền review
+        if (!order.getUser().getId().equals(user.getId()) || order.getStatus() != OrderStatus.DELIVERED) {
             throw new AppException(ErrorCode.ORDER_NOT_COMPLETED);
         }
 
-        ProductReview review = productReviewRepository.findByProductIdAndUserId(product.getId(), user.getId())
-                .orElse(new ProductReview());
+        // Kiểm tra review đã tồn tại chưa
+        ProductReview existingReview = productReviewRepository.findByOrderItemId(orderItem.getId()).orElse(null);
 
-        review.setUser(user);
-        review.setProduct(product);
-        review.setRating(reviewRequest.getRating());
-        review.setReviewText(reviewRequest.getReviewText());
+        if (existingReview != null) {
+            // Cho phép chỉnh sửa nếu còn trong hạn 30 ngày
+            if (!existingReview.getUser().getId().equals(user.getId())) {
+                throw new AppException(ErrorCode.FORBIDDEN);
+            }
 
-        // Upload ảnh nếu có
-        if (reviewRequest.getImageFiles() != null) {
+            if (existingReview.getCreatedAt().plusDays(30).isBefore(java.time.LocalDateTime.now())) {
+                throw new AppException(ErrorCode.REVIEW_EDIT_EXPIRED);
+            }
+
+            existingReview.setRating(reviewRequest.getRating());
+            existingReview.setReviewText(reviewRequest.getReviewText());
+
+            // Nếu có ảnh mới, cập nhật ảnh
+            if (reviewRequest.getImageFiles() != null && !reviewRequest.getImageFiles().isEmpty()) {
+                List<String> imageUrls = fileStorageService.storeImages(reviewRequest.getImageFiles());
+
+                List<ProductReviewImage> reviewImages = imageUrls.stream()
+                        .map(url -> ProductReviewImage.builder()
+                                .productReview(existingReview)
+                                .imageUrl(url)
+                                .build())
+                        .toList();
+
+                existingReview.getImages().clear();
+                existingReview.getImages().addAll(reviewImages);
+            }
+
+            return productReviewMapper.toResponse(productReviewRepository.save(existingReview));
+        }
+
+        // Nếu chưa có review, tạo mới
+        ProductReview newReview = new ProductReview();
+        newReview.setUser(user);
+        newReview.setProduct(product);
+        newReview.setOrderItem(orderItem);
+        newReview.setRating(reviewRequest.getRating());
+        newReview.setReviewText(reviewRequest.getReviewText());
+
+        if (reviewRequest.getImageFiles() != null && !reviewRequest.getImageFiles().isEmpty()) {
             List<String> imageUrls = fileStorageService.storeImages(reviewRequest.getImageFiles());
 
             List<ProductReviewImage> reviewImages = imageUrls.stream()
                     .map(url -> ProductReviewImage.builder()
-                            .productReview(review)
+                            .productReview(newReview)
                             .imageUrl(url)
                             .build())
                     .toList();
 
-            review.getImages().clear(); // Xóa ảnh cũ nếu cập nhật review
-            review.getImages().addAll(reviewImages);
+            newReview.setImages(reviewImages);
         }
 
-        return productReviewMapper.toResponse(productReviewRepository.save(review));
+        return productReviewMapper.toResponse(productReviewRepository.save(newReview));
     }
+
+
     @Override
     public PageResponse<ProductReviewResponse> getReviewsByProduct(Long productId, Pageable pageable) {
         productRepository.findById(productId)
@@ -115,7 +157,6 @@ public class ProductReviewServiceImpl implements ProductReviewService {
         ProductReview review = productReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new AppException(ErrorCode.REVIEW_NOT_FOUND));
 
-        // Chỉ cho phép xóa review của chính user đó
         if (!review.getUser().getId().equals(user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thể xóa review của người khác.");
         }
