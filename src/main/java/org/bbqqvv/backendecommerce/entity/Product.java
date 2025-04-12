@@ -1,7 +1,6 @@
 package org.bbqqvv.backendecommerce.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.*;
@@ -44,7 +43,6 @@ public class Product {
     private int salePercentage;
 
     @Column(nullable = true)
-    @DecimalMin("0.0")
     private boolean featured;
 
     @Column(nullable = false)

@@ -22,6 +22,7 @@ public interface ProductMapper {
     @Mapping(source = "secondaryImages", target = "secondaryImageUrls", qualifiedByName = "mapSecondaryImageUrls")
     @Mapping(source = "descriptionImages", target = "descriptionImageUrls", qualifiedByName = "mapDescriptionImageUrls")
     @Mapping(source = "tags", target = "tags", qualifiedByName = "mapTagsToTagNames") // ✨ Convert Set<Tag> → Set<String>
+    @Mapping(target = "reviewCount", expression = "java(product.getReviews() != null ? product.getReviews().size() : 0)")
     ProductResponse toProductResponse(Product product);
     @Named("mapSecondaryImageUrls")
     default List<String> mapSecondaryImageUrls(List<ProductSecondaryImage> images) {

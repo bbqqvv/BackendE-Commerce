@@ -155,6 +155,13 @@ public class ProductServiceImpl implements ProductService {
                 .build();
     }
 
+    @Override
+    public PageResponse<ProductResponse> getFeaturedProducts(Pageable pageable) {
+        Page<Product> featuredProducts = productRepository.findByFeaturedTrue(pageable);
+        return toPageResponse(featuredProducts);
+    }
+
+
     private Category getCategoryById(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
@@ -292,6 +299,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductResponse toFullProductResponse(Product product) {
-        return productMapper.toProductResponse(product);
+        ProductResponse response = productMapper.toProductResponse(product);
+        long reviewCount = productRepository.countReviewsByProductId(product.getId());
+        response.setReviewCount((int) reviewCount);
+        return response;
     }
 }

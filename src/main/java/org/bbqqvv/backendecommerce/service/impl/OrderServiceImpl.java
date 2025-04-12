@@ -264,6 +264,14 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toOrderResponse(order);
     }
 
+    @Override
+    public boolean isProductDeliveredToCurrentUser(Long productId) {
+        User user = getAuthenticatedUser();
+        return orderRepository.existsByUserAndProductAndDelivered(
+                user.getId(),
+                productId
+        );
+    }
     private Order findOrderByCode(String orderCode) {
         return orderRepository.findByOrderCode(orderCode)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));

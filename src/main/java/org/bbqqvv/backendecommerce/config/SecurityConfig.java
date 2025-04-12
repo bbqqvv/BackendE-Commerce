@@ -48,7 +48,7 @@ public class SecurityConfig {
             "/api/search-history/**",
             "api/addresses/**",
             "api/favourites/**",
-            "/api/filter/**"
+            "/api/filter/**",
 
 
     };

@@ -23,6 +23,7 @@ public class ProductResponse {
     private boolean featured;
     private boolean sale;
     private boolean active;
+    private int reviewCount;
     private int salePercentage;
     private Set<String> tags;
     private String categoryName;

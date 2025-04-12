@@ -1,15 +1,20 @@
 package org.bbqqvv.backendecommerce.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
+import org.bbqqvv.backendecommerce.dto.request.ViewedProductRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.bbqqvv.backendecommerce.service.ProductService;
+import org.bbqqvv.backendecommerce.service.RecentlyViewedProductService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -17,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final ProductService productService;
+    private final RecentlyViewedProductService recentlyViewedProductService;
 
     // Tạo mới một sản phẩm
     @PostMapping
@@ -27,6 +33,17 @@ public class ProductController {
                 .success(true)
                 .message("Product created successfully")
                 .data(product)
+                .build();
+    }
+    // Lấy sản phẩm nổi bật (featured) với phân trang
+    @GetMapping("/featured")
+    public ApiResponse<PageResponse<ProductResponse>> getFeaturedProducts(
+            @PageableDefault(size = 9) Pageable pageable) {
+        PageResponse<ProductResponse> featuredProducts = productService.getFeaturedProducts(pageable);
+        return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .success(true)
+                .message("Featured products retrieved successfully")
+                .data(featuredProducts)
                 .build();
     }
 
@@ -112,6 +129,41 @@ public class ProductController {
                 .data(productPage)
                 .build();
     }
+    /**
+     * Đánh dấu sản phẩm đã xem
+     */
+    @PostMapping("/mark")
+    public ApiResponse<String> markProductAsViewed(@RequestBody @Valid ViewedProductRequest request) {
+        recentlyViewedProductService.markProductAsViewed(request.getProductId());
+        return ApiResponse.<String>builder()
+                .success(true)
+                .data("Product marked as viewed")
+                .message("Marked successfully")
+                .build();
+    }
 
+    /**
+     * Lấy danh sách sản phẩm đã xem gần đây
+     */
+    @GetMapping("/recently-viewed")
+    public ApiResponse<PageResponse<ProductResponse>> getRecentlyViewedProducts(
+            @PageableDefault(size = 10) Pageable pageable) {
+        PageResponse<ProductResponse> response = recentlyViewedProductService.getRecentlyViewedProducts(pageable);
+        return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .success(true)
+                .data(response)
+                .message("Fetched successfully")
+                .build();
+    }
+
+    @PostMapping("/viewed-sync")
+    public ApiResponse<String> syncViewedProducts(@RequestBody List<Long> productIds) {
+        recentlyViewedProductService.syncViewedProducts(productIds);
+        return ApiResponse.<String>builder()
+                .success(true)
+                .data("Synced successfully")
+                .message("Local viewed products synced")
+                .build();
+    }
 
 }

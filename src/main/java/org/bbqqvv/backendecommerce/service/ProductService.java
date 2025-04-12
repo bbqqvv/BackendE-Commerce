@@ -14,4 +14,6 @@ public interface ProductService {
     ProductResponse updateProduct(Long id, ProductRequest productRequest);
     boolean deleteProduct(Long id);
     PageResponse<ProductResponse> searchProductsByName(String name, Pageable pageable);
+
+    PageResponse<ProductResponse> getFeaturedProducts(Pageable pageable);
 }

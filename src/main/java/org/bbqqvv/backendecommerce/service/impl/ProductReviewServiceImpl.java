@@ -12,7 +12,10 @@ import org.bbqqvv.backendecommerce.entity.*;
 import org.bbqqvv.backendecommerce.exception.AppException;
 import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.ProductReviewMapper;
-import org.bbqqvv.backendecommerce.repository.*;
+import org.bbqqvv.backendecommerce.repository.OrderItemRepository;
+import org.bbqqvv.backendecommerce.repository.ProductRepository;
+import org.bbqqvv.backendecommerce.repository.ProductReviewRepository;
+import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.ProductReviewService;
 import org.bbqqvv.backendecommerce.service.img.FileStorageService;
 import org.springframework.data.domain.Page;
@@ -21,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.bbqqvv.backendecommerce.util.PagingUtil.toPageResponse;
@@ -64,35 +68,37 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     public ProductReviewResponse addOrUpdateReview(ProductReviewRequest reviewRequest) {
         User user = getAuthenticatedUser();
 
-        // Lấy orderItem từ ID
-        OrderItem orderItem = orderItemRepository.findById(reviewRequest.getOrderItemId())
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_ITEM_NOT_FOUND));
+        // Lấy danh sách orderItem có productId đã giao cho user
+        List<OrderItem> deliveredOrderItems = orderItemRepository
+                .findByProductIdAndOrderUserIdAndOrderStatus(
+                        reviewRequest.getProductId(),
+                        user.getId(),
+                        OrderStatus.DELIVERED
+                );
 
-        Product product = orderItem.getProduct();
-        Order order = orderItem.getOrder();
-
-        // Kiểm tra quyền review
-        if (!order.getUser().getId().equals(user.getId()) || order.getStatus() != OrderStatus.DELIVERED) {
+        if (deliveredOrderItems.isEmpty()) {
             throw new AppException(ErrorCode.ORDER_NOT_COMPLETED);
         }
+
+        // Dùng orderItem đầu tiên tìm được
+        OrderItem orderItem = deliveredOrderItems.get(0);
+        Product product = orderItem.getProduct();
 
         // Kiểm tra review đã tồn tại chưa
         ProductReview existingReview = productReviewRepository.findByOrderItemId(orderItem.getId()).orElse(null);
 
         if (existingReview != null) {
-            // Cho phép chỉnh sửa nếu còn trong hạn 30 ngày
             if (!existingReview.getUser().getId().equals(user.getId())) {
                 throw new AppException(ErrorCode.FORBIDDEN);
             }
 
-            if (existingReview.getCreatedAt().plusDays(30).isBefore(java.time.LocalDateTime.now())) {
+            if (existingReview.getCreatedAt().plusDays(30).isBefore(LocalDateTime.now())) {
                 throw new AppException(ErrorCode.REVIEW_EDIT_EXPIRED);
             }
 
             existingReview.setRating(reviewRequest.getRating());
             existingReview.setReviewText(reviewRequest.getReviewText());
 
-            // Nếu có ảnh mới, cập nhật ảnh
             if (reviewRequest.getImageFiles() != null && !reviewRequest.getImageFiles().isEmpty()) {
                 List<String> imageUrls = fileStorageService.storeImages(reviewRequest.getImageFiles());
 
@@ -110,7 +116,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             return productReviewMapper.toResponse(productReviewRepository.save(existingReview));
         }
 
-        // Nếu chưa có review, tạo mới
+        // Tạo mới review nếu chưa có
         ProductReview newReview = new ProductReview();
         newReview.setUser(user);
         newReview.setProduct(product);
@@ -133,7 +139,6 @@ public class ProductReviewServiceImpl implements ProductReviewService {
 
         return productReviewMapper.toResponse(productReviewRepository.save(newReview));
     }
-
 
     @Override
     public PageResponse<ProductReviewResponse> getReviewsByProduct(Long productId, Pageable pageable) {

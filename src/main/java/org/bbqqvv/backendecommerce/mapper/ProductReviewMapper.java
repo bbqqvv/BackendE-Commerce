@@ -10,9 +10,9 @@ import org.mapstruct.Mapping;
 public interface ProductReviewMapper {
 
     // Chuyển DTO -> Entity (Dùng khi tạo mới ProductReview)
-    @Mapping(target = "id", ignore = true)  // ID được tự động tạo
-    @Mapping(target = "product", ignore = true) // Product được lấy từ service
-    @Mapping(target = "user", ignore = true)  // User được lấy từ security context
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "product", ignore = true)
+    @Mapping(target = "user", ignore = true)
     @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     ProductReview toEntity(ProductReviewRequest request);
 

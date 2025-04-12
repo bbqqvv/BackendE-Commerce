@@ -14,4 +14,6 @@ public interface OrderService {
     void cancelOrder(Long orderId);
     void deleteOrder(Long orderId);
     OrderResponse getOrderByCode(String orderCode);
+
+    boolean isProductDeliveredToCurrentUser(Long productId);
 }

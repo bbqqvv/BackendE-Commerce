@@ -34,7 +34,7 @@ public class OrderController {
         return ApiResponse.<OrderResponse>builder()
                 .success(true)
                 .message("Order details retrieved successfully")
-                .data(orderService.getOrderByCode(orderCode))  
+                .data(orderService.getOrderByCode(orderCode))
                 .build();
     }
 
@@ -47,6 +47,17 @@ public class OrderController {
                 .success(true)
                 .message("User's orders retrieved successfully")
                 .data(orderPage)
+                .build();
+    }
+    // 📌 Thêm vào OrderController.java
+    @GetMapping("/check-delivery/{productId}")
+    public ApiResponse<Boolean> checkProductDelivery(
+            @PathVariable Long productId) {
+        boolean isDelivered = orderService.isProductDeliveredToCurrentUser(productId);
+        return ApiResponse.<Boolean>builder()
+                .success(true)
+                .message("Product delivery status checked successfully")
+                .data(isDelivered)
                 .build();
     }
 

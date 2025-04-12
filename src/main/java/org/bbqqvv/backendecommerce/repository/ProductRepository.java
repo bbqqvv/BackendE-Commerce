@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -22,6 +23,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Optional<Product> findBySlug(String slug);
     Page<Product> findAll(Pageable pageable);
     Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    @Query("SELECT COUNT(r) FROM ProductReview r WHERE r.product.id = :productId")
+    long countReviewsByProductId(@Param("productId") Long productId);
     @Query("SELECT DISTINCT pv.color FROM ProductVariant pv")
     List<String> findDistinctColors();
 
@@ -37,4 +40,5 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("SELECT MAX(sp.price) FROM SizeProduct sp")
     BigDecimal findMaxPrice();
 
+    Page<Product> findByFeaturedTrue(Pageable pageable);
 }
