@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -78,10 +79,12 @@ public class AuthenticationService {
 
         return  userMapper.toUserResponse(newUser);
     }
+
     public String login(AuthenticationRequest loginUserDto) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginUserDto.getUsername(), loginUserDto.getPassword())
         );
-        return jwtTokenUtil.generateToken(((org.springframework.security.core.userdetails.User)authentication.getPrincipal()).getUsername());
+        // Sửa lại dòng này để truyền UserDetails thay vì chỉ username
+        return jwtTokenUtil.generateToken((UserDetails) authentication.getPrincipal());
     }
 }

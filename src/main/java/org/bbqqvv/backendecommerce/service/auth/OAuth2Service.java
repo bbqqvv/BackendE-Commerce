@@ -3,19 +3,29 @@ package org.bbqqvv.backendecommerce.service.auth;
 import lombok.extern.slf4j.Slf4j;
 import org.bbqqvv.backendecommerce.config.jwt.JwtTokenUtil;
 import org.bbqqvv.backendecommerce.entity.AuthProvider;
+import org.bbqqvv.backendecommerce.entity.Role;
 import org.bbqqvv.backendecommerce.entity.User;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class OAuth2Service {
+public class OAuth2Service implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final JwtTokenUtil jwtTokenUtil;
@@ -54,7 +64,7 @@ public class OAuth2Service {
         Map<String, Object> googleUser = validationResponse.getBody();
         String email = (String) googleUser.get("email");
         String name = (String) googleUser.get("name");
-        String googleId = (String) googleUser.get("sub"); // Google user ID
+        String googleId = (String) googleUser.get("sub");
 
         if (email == null || googleId == null) {
             log.error("Google token missing required fields");
@@ -63,6 +73,8 @@ public class OAuth2Service {
 
         // Kiểm tra user trong DB hoặc tạo mới
         User user = userRepository.findByEmail(email).orElse(null);
+        boolean isNewUser = false;
+
         if (user == null) {
             log.info("Creating new user from Google login: {}", email);
             user = User.builder()
@@ -70,8 +82,10 @@ public class OAuth2Service {
                     .username(name)
                     .provider(AuthProvider.GOOGLE)
                     .providerId(googleId)
+                    .authorities(Set.of(Role.ROLE_USER)) // Mặc định role USER
                     .build();
             userRepository.save(user);
+            isNewUser = true;
         } else {
             if (user.getProviderId() == null) {
                 user.setProviderId(googleId);
@@ -84,10 +98,33 @@ public class OAuth2Service {
             }
         }
 
+        // Tạo UserDetails từ user
+        UserDetails userDetails = this.loadUserByUsername(email);
+
         // Tạo JWT token và trả về
-        String token = jwtTokenUtil.generateToken(user.getEmail());
+        String token = jwtTokenUtil.generateToken(userDetails);
         log.info("Google login successful for email: {}", email);
         return token;
     }
 
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                "", // Không sử dụng password với OAuth2
+                getAuthorities(user)
+        );
+    }
+
+    private Collection<? extends GrantedAuthority> getAuthorities(User user) {
+        if (user.getAuthorities() == null || user.getAuthorities().isEmpty()) {
+            return Collections.singletonList(new SimpleGrantedAuthority(Role.ROLE_USER.name()));
+        }
+        return user.getAuthorities().stream()
+                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .collect(Collectors.toList());
+    }
 }

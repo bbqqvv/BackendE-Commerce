@@ -27,18 +27,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
             throws ServletException, IOException {
 
         String token = extractTokenFromRequest(request);
-        
-        if (token != null && jwtTokenUtil.validateToken(token, getUsernameFromToken(token))) {
-        	// Lấy thông tin người dùng từ token
-            String username = getUsernameFromToken(token);
-            UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-            
-            // Tạo Authentication từ UserDetails
-            UsernamePasswordAuthenticationToken authenticationToken = 
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-            
-            // Cung cấp chi tiết xác thực cho SecurityContext
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+        if (token != null) {
+            try {
+                String username = jwtTokenUtil.extractUsername(token);
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+
+                if (jwtTokenUtil.validateToken(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities());
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                logger.error("Cannot set user authentication: {}");
+            }
         }
 
         chain.doFilter(request, response);
