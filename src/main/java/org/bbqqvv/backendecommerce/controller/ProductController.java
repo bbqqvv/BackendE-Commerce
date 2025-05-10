@@ -38,7 +38,7 @@ public class ProductController {
     // Lấy sản phẩm nổi bật (featured) với phân trang
     @GetMapping("/featured")
     public ApiResponse<PageResponse<ProductResponse>> getFeaturedProducts(
-            @PageableDefault(size = 9) Pageable pageable) {
+            @PageableDefault(size = 8) Pageable pageable) {
         PageResponse<ProductResponse> featuredProducts = productService.getFeaturedProducts(pageable);
         return ApiResponse.<PageResponse<ProductResponse>>builder()
                 .success(true)
@@ -121,7 +121,7 @@ public class ProductController {
     @GetMapping("/search")
     public ApiResponse<PageResponse<ProductResponse>> searchProductsByName(
             @RequestParam String name,
-            @PageableDefault(page = 0,size = 9) Pageable pageable) {
+            @PageableDefault(page = 0, size = 9) Pageable pageable) {
         PageResponse<ProductResponse> productPage = productService.searchProductsByName(name, pageable);
         return ApiResponse.<PageResponse<ProductResponse>>builder()
                 .success(true)
@@ -129,6 +129,7 @@ public class ProductController {
                 .data(productPage)
                 .build();
     }
+
     /**
      * Đánh dấu sản phẩm đã xem
      */
@@ -165,5 +166,7 @@ public class ProductController {
                 .message("Local viewed products synced")
                 .build();
     }
+
+
 
 }

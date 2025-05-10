@@ -52,8 +52,7 @@ public class FilterServiceImpl implements FilterService {
         // 4. Min & Max Price
         BigDecimal minPrice = productRepository.findMinPrice();
         BigDecimal maxPrice = productRepository.findMaxPrice();
-
-        // 5. Categories → trả về DTO CategoryResponse
+            // 5. Categories → trả về DTO CategoryResponse
         List<CategoryResponseForFilter> categories = categoryRepository.findAll()
                 .stream()
                 .map(c -> CategoryResponseForFilter.builder()
