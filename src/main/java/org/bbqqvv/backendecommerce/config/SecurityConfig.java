@@ -34,12 +34,7 @@ public class SecurityConfig {
 
     // Các URL không yêu cầu xác thực
     private static final String[] WHITE_LIST_URL = {
-            "/auth/login",
-            "/auth/register",
-            "/auth/oauth2/google",
-            "/auth/forgot-password",
-            "/auth/verify-otp",
-            "/auth/reset-password",
+            "/api/auth/**",
             "/api/categories/**",
             "/api/products-review/**",
             "/api/products/**",
