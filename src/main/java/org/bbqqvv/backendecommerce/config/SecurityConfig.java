@@ -50,7 +50,13 @@ public class SecurityConfig {
             "api/favourites/**",
             "/api/filter/**",
 
-
+            // ⚠️ Các URL Swagger cần được permitAll
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/v2/api-docs/**",
+            "/swagger-resources/**",
+            "/configuration/**",
+            "/webjars/**"
     };
     private static final String[] SECURED_URL_PATTERNS = {
             "/api/**",
@@ -89,11 +95,15 @@ public class SecurityConfig {
     private UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:3000");  // Cho phép origin này
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000"
+        ));
+        config.addAllowedOriginPattern("*"); //Cấu hình tạm thời
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.addAllowedHeader("*");
         config.setAllowCredentials(true);
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }

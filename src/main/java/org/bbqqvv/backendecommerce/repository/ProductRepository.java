@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -27,18 +26,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     long countReviewsByProductId(@Param("productId") Long productId);
     @Query("SELECT DISTINCT pv.color FROM ProductVariant pv")
     List<String> findDistinctColors();
-
     @Query("SELECT DISTINCT sp.sizeName FROM SizeProduct sp")
     List<String> findDistinctSizes();
-
     @Query("SELECT DISTINCT t.name FROM Product p JOIN p.tags t")
     List<String> findDistinctTags();
-
     @Query("SELECT MIN(sp.price) FROM SizeProduct sp")
     BigDecimal findMinPrice();
-
     @Query("SELECT MAX(sp.price) FROM SizeProduct sp")
     BigDecimal findMaxPrice();
-
     Page<Product> findByFeaturedTrue(Pageable pageable);
 }
