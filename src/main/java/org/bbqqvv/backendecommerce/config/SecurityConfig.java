@@ -34,6 +34,7 @@ public class SecurityConfig {
 
     // Các URL không yêu cầu xác thực
     private static final String[] WHITE_LIST_URL = {
+            "/**",
             "/api/auth/**",
             "/api/categories/**",
             "/api/products-review/**",
@@ -91,8 +92,9 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
-                "http://localhost:3000"
-        ));
+                "http://localhost:3000",
+                "https://roway-shop.vercel.app"
+                ));
         config.addAllowedOriginPattern("*"); //Cấu hình tạm thời
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.addAllowedHeader("*");
@@ -100,5 +102,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
 }
