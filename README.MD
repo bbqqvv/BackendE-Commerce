@@ -1,42 +1,44 @@
 
-# 🛒 **E-Commerce Platform**
+# 🛒 E-Commerce Platform
 
-**E-Commerce** là một nền tảng thương mại điện tử hiện đại, mạnh mẽ, hỗ trợ quản lý sản phẩm, đơn hàng, thanh toán và nhiều tính năng khác. Dự án tập trung vào kiến trúc rõ ràng, bảo mật và trải nghiệm người dùng tốt.
-
----
-
-## 🚀 **Tech Stack**
-
-| Thành phần            | Công nghệ sử dụng                                  |
-| --------------------- | -------------------------------------------------- |
-| **Backend**           | Java Spring Boot, Spring Security, Spring Data JPA |
-| **Frontend**          | Next.js, React.js, Tailwind CSS, Redux Toolkit     |
-| **Database**          | PostgreSQL                                         |
-| **Authentication**    | JWT (JSON Web Token), OAuth2 (Google Login)        |
-| **API Documentation** | Swagger (OpenAPI), Postman                         |
+**E-Commerce** is a modern and powerful e-commerce platform that supports product management, orders, payments, and many other features. The project focuses on clear architecture, security, and optimal user experience.
 
 ---
 
-## ⚙️ **Hướng Dẫn Cài Đặt**
+## 🚀 Tech Stack
 
-### 🔧 **Cài Đặt Backend**
+| Component            | Technologies Used                                  |
+|----------------------|----------------------------------------------------|
+| **Backend**          | Java Spring Boot, Spring Security, Spring Data JPA |
+| **Frontend**         | Next.js, React.js, Tailwind CSS, Redux Toolkit     |
+| **Database**         | PostgreSQL                                         |
+| **Authentication**   | JWT (JSON Web Token), OAuth2 (Google Login)        |
+| **API Documentation**| Swagger (OpenAPI), Postman                         |
+| **Cloud**            | IMGBB                                              |
+
+---
+
+## ⚙️ Installation Guide
+
+### 🔧 Backend Setup
 
 ```bash
 git clone https://github.com/bbqqvv/BackendE-Commerce.git
 cd BackendE-Commerce
-```
+````
 
-1. Cập nhật thông tin kết nối **PostgreSQL** trong `application.yaml`
-2. Chạy ứng dụng:
+1. Update PostgreSQL connection info in `application.yaml` file
+2. Run the application:
 
 ```bash
-./mvnw spring-boot:run     # Nếu dùng Maven Wrapper
-mvn spring-boot:run        # Nếu đã cài Maven
+./mvnw spring-boot:run     # Using Maven Wrapper
+# or
+mvn spring-boot:run        # If Maven is installed on your machine
 ```
 
 ---
 
-### 🐳 **Chạy bằng Docker (Đang cập nhật)**
+### 🐳 Run with Docker (Updating)
 
 ```bash
 docker-compose up -d
@@ -44,44 +46,36 @@ docker-compose up -d
 
 ---
 
-## 🎯 **Tính Năng Chính**
+## 🎯 Key Features
 
-* ✅ Quản lý sản phẩm: CRUD sản phẩm, danh mục, đánh giá
-* ✅ Quản lý đơn hàng: Xử lý đơn, cập nhật trạng thái
-* ✅ Giỏ hàng: Thêm, xóa, cập nhật số lượng
-* ✅ Thanh toán: Hỗ trợ cổng thanh toán bên thứ ba
-* ✅ Xác thực & phân quyền: JWT, OAuth2 (Google), Admin/User
-* ✅ Quản lý mã giảm giá: Tạo, áp dụng, xóa mã giảm giá
+* ✅ Product management: CRUD products, categories, reviews
+* ✅ Order management: Process orders, update status
+* ✅ Shopping cart: Add, remove, update product quantities
+* ✅ Payment: Integrate third-party payment gateways
+* ✅ Authentication & Authorization: JWT, OAuth2 (Google), Admin/User roles
+* ✅ Discount code management: Create, apply, and delete discount codes
 
 ---
 
-## 📘 **Tài Liệu API**
+## 📘 API Documentation
 
 * 🔗 Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-* 🧾 Tài liệu chi tiết: [DeepWiki Order Management](https://deepwiki.com/bbqqvv/BackendE-Commerce/5-order-management)
-* 📥 Postman Collection: *(Thêm link nếu có)*
-* 📄 PDF hướng dẫn API: *(Tùy chọn đính kèm)*
+* 🧾 Detailed documentation: [DeepWiki Order Management](https://deepwiki.com/bbqqvv/Backend-E-Commerce/5-order-management)
+* 📥 Postman Collection: *(Add link if available)*
+* 📄 API guide PDF: *(Optional attachment)*
 
 ---
 
-## 🤝 **Đóng Góp**
+## 🤝 Contribution
 
-Bạn có thể:
+You are welcome to contribute by:
 
-* **Fork** dự án
-* Gửi **Pull Request**
-* Tạo **Issue** nếu có câu hỏi hoặc lỗi
-
----
-
-## 📄 **License**
-
-MIT License – Sử dụng thoải mái, vui lòng giữ bản quyền tác giả.
+* **Forking** the project
+* Sending **Pull Requests**
+* Creating **Issues** if you have questions or find bugs
 
 ---
 
-> 🚀 *Chúc bạn học tập & phát triển dự án thật vui vẻ!* 😎
+## 📄 License
 
----
-
-Bạn muốn mình chuyển phần này sang file `README.md` hoặc định dạng khác như PDF hay HTML không?
+This project is licensed under the MIT License – Feel free to use it freely, please keep the original copyright information.
