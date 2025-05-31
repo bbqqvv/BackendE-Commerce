@@ -4,69 +4,71 @@ import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.request.AddressRequest;
 import org.bbqqvv.backendecommerce.dto.response.AddressResponse;
 import org.bbqqvv.backendecommerce.service.AddressService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/addresses")
 @RequiredArgsConstructor
+@Tag(name = "Address", description = "Address API for managing user addresses")
 public class AddressController {
 
     private final AddressService addressService;
 
-    // Tạo mới một địa chỉ
     @PostMapping
-    public ApiResponse<AddressResponse> createAddress(@RequestBody @Valid AddressRequest addressRequest) {
+    @Operation(summary = "Create new address")
+    public ApiResponse<AddressResponse> createAddress(@RequestBody @Valid AddressRequest request) {
         return ApiResponse.<AddressResponse>builder()
                 .success(true)
-                .data(addressService.createAddress(addressRequest))
+                .data(addressService.createAddress(request))
                 .build();
     }
 
-    // Lấy danh sách địa chỉ của chính người dùng (Lấy từ Token)
     @GetMapping("/me")
-    public ApiResponse<List<AddressResponse>> getAddressesByUser() {
+    @Operation(summary = "Get current user's addresses")
+    public ApiResponse<List<AddressResponse>> getMyAddresses() {
         return ApiResponse.<List<AddressResponse>>builder()
                 .success(true)
                 .data(addressService.getAddressesByUser())
                 .build();
     }
 
-    // Lấy địa chỉ theo ID (Chỉ lấy được địa chỉ của chính mình)
     @GetMapping("/{id}")
-    public ApiResponse<AddressResponse> getAddressById(@PathVariable Long id) {
+    @Operation(summary = "Get address by ID")
+    public ApiResponse<AddressResponse> getAddress(@PathVariable Long id) {
         return ApiResponse.<AddressResponse>builder()
                 .success(true)
                 .data(addressService.getAddressById(id))
                 .build();
     }
 
-    // Cập nhật thông tin địa chỉ theo ID (Chỉ cập nhật địa chỉ của mình)
     @PutMapping("/{id}")
-    public ApiResponse<AddressResponse> updateAddress(@PathVariable Long id, @RequestBody @Valid AddressRequest addressRequest) {
+    @Operation(summary = "Update address by ID")
+    public ApiResponse<AddressResponse> updateAddress(@PathVariable Long id, @RequestBody @Valid AddressRequest request) {
         return ApiResponse.<AddressResponse>builder()
                 .success(true)
-                .data(addressService.updateAddress(id, addressRequest))
+                .data(addressService.updateAddress(id, request))
                 .build();
     }
 
-    // Xóa một địa chỉ theo ID (Chỉ xóa địa chỉ của mình)
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete address by ID")
     public ApiResponse<String> deleteAddress(@PathVariable Long id) {
         addressService.deleteAddress(id);
         return ApiResponse.<String>builder()
                 .success(true)
-                .data("Address has been deleted")
+                .data("Address deleted")
                 .build();
     }
 
-    // Đặt địa chỉ mặc định (Chỉ đặt địa chỉ của mình)
     @PutMapping("/{id}/set-default")
-    public ApiResponse<AddressResponse> setDefaultAddress(@PathVariable Long id) {
+    @Operation(summary = "Set address as default")
+    public ApiResponse<AddressResponse> setDefault(@PathVariable Long id) {
         return ApiResponse.<AddressResponse>builder()
                 .success(true)
                 .data(addressService.setDefaultAddress(id))
