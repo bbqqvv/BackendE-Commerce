@@ -1,33 +1,37 @@
 server:
   port: ${PORT:8080}
-
 frontend:
   url: https://roway-web-service.vercel.app/
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
 
 spring:
   application:
     name: RowayShop
-
   servlet:
     multipart:
       enabled: true
       max-file-size: 10MB
       max-request-size: 10MB
-
+  redis:
+    port: 6379
+    timeout: 60000
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
   mail:
     host: ${MAIL_HOST}
     port: 587
@@ -39,16 +43,15 @@ spring:
           auth: true
           starttls:
             enable: true
-
+  # Thêm cấu hình Thymeleaf ở đây
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
     mode: HTML
+    cache: false # Đặt false cho môi trường dev, true cho production
     encoding: UTF-8
-    cache: false
     servlet:
       content-type: text/html
-
   security:
     oauth2:
       client:
@@ -62,31 +65,15 @@ spring:
         provider:
           google:
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: 60000
-      database: 0
-
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    display-request-duration: true
+      host: localhost
 
 application:
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
-      expiration: 86400000 # 1 day in milliseconds
-  cloudinary:
-    cloud-name: ${CLOUDINARY_CLOUD_NAME}
-    api-key: ${CLOUDINARY_API_KEY}
-    api-secret: ${CLOUDINARY_API_SECRET}
+      expiration: 86400000
 
 payment:
   vnPay:
