@@ -16,5 +16,4 @@ public class ProductVariantRequest {
     private MultipartFile imageUrl;
     private List<SizeProductRequest> sizes;
     private String color;
-
 }

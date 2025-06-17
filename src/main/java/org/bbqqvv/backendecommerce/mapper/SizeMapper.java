@@ -12,4 +12,5 @@ public interface SizeMapper {
     SizeCategory toSize(SizeCategoryRequest sizeCategoryRequest);
     @Mapping(target = "categoryId",source = "category.id")
     SizeCategoryResponse toResponse(SizeCategory sizeCategory);
+
 }
