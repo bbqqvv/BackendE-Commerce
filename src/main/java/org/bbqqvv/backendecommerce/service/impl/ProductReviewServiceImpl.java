@@ -17,7 +17,7 @@ import org.bbqqvv.backendecommerce.repository.ProductRepository;
 import org.bbqqvv.backendecommerce.repository.ProductReviewRepository;
 import org.bbqqvv.backendecommerce.repository.UserRepository;
 import org.bbqqvv.backendecommerce.service.ProductReviewService;
-import org.bbqqvv.backendecommerce.service.img.CloudinaryService;
+import org.bbqqvv.backendecommerce.service.img.FileStorageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -39,7 +39,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     UserRepository userRepository;
     ProductReviewMapper productReviewMapper;
     OrderItemRepository orderItemRepository;
-    CloudinaryService cloudinaryService;
+    FileStorageService fileStorageService;
 
     public ProductReviewServiceImpl(
             ProductReviewRepository productReviewRepository,
@@ -47,14 +47,14 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             ProductReviewMapper productReviewMapper,
             UserRepository userRepository,
             OrderItemRepository orderItemRepository,
-            CloudinaryService cloudinaryService
+            FileStorageService fileStorageService
     ) {
         this.productReviewRepository = productReviewRepository;
         this.productRepository = productRepository;
         this.productReviewMapper = productReviewMapper;
         this.userRepository = userRepository;
         this.orderItemRepository = orderItemRepository;
-        this.cloudinaryService = cloudinaryService;
+        this.fileStorageService = fileStorageService;
     }
 
     private User getAuthenticatedUser() {
@@ -68,6 +68,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
     public ProductReviewResponse addOrUpdateReview(ProductReviewRequest reviewRequest) {
         User user = getAuthenticatedUser();
 
+        // Lấy danh sách orderItem có productId đã giao cho user
         List<OrderItem> deliveredOrderItems = orderItemRepository
                 .findByProductIdAndOrderUserIdAndOrderStatus(
                         reviewRequest.getProductId(),
@@ -79,9 +80,11 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             throw new AppException(ErrorCode.ORDER_NOT_COMPLETED);
         }
 
+        // Dùng orderItem đầu tiên tìm được
         OrderItem orderItem = deliveredOrderItems.get(0);
         Product product = orderItem.getProduct();
 
+        // Kiểm tra review đã tồn tại chưa
         ProductReview existingReview = productReviewRepository.findByOrderItemId(orderItem.getId()).orElse(null);
 
         if (existingReview != null) {
@@ -97,7 +100,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             existingReview.setReviewText(reviewRequest.getReviewText());
 
             if (reviewRequest.getImageFiles() != null && !reviewRequest.getImageFiles().isEmpty()) {
-                List<String> imageUrls = cloudinaryService.uploadImages(reviewRequest.getImageFiles());
+                List<String> imageUrls = fileStorageService.storeImages(reviewRequest.getImageFiles());
 
                 List<ProductReviewImage> reviewImages = imageUrls.stream()
                         .map(url -> ProductReviewImage.builder()
@@ -113,7 +116,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
             return productReviewMapper.toResponse(productReviewRepository.save(existingReview));
         }
 
-        // New review
+        // Tạo mới review nếu chưa có
         ProductReview newReview = new ProductReview();
         newReview.setUser(user);
         newReview.setProduct(product);
@@ -122,7 +125,7 @@ public class ProductReviewServiceImpl implements ProductReviewService {
         newReview.setReviewText(reviewRequest.getReviewText());
 
         if (reviewRequest.getImageFiles() != null && !reviewRequest.getImageFiles().isEmpty()) {
-            List<String> imageUrls = cloudinaryService.uploadImages(reviewRequest.getImageFiles());
+            List<String> imageUrls = fileStorageService.storeImages(reviewRequest.getImageFiles());
 
             List<ProductReviewImage> reviewImages = imageUrls.stream()
                     .map(url -> ProductReviewImage.builder()

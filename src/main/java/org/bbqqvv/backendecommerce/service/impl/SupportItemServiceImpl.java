@@ -11,7 +11,7 @@ import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.SupportItemMapper;
 import org.bbqqvv.backendecommerce.repository.SupportItemRepository;
 import org.bbqqvv.backendecommerce.service.SupportItemsService;
-import org.bbqqvv.backendecommerce.service.img.CloudinaryService;
+import org.bbqqvv.backendecommerce.service.img.FileStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +26,14 @@ public class SupportItemServiceImpl implements SupportItemsService {
 
     SupportItemRepository supportItemRepository;
     SupportItemMapper supportItemMapper;
-    CloudinaryService cloudinaryService;
+    FileStorageService fileStorageService;
 
     public SupportItemServiceImpl(SupportItemRepository supportItemRepository,
                                   SupportItemMapper supportItemMapper,
-                                  CloudinaryService cloudinaryService) {
+                                  FileStorageService fileStorageService) {
         this.supportItemRepository = supportItemRepository;
         this.supportItemMapper = supportItemMapper;
-        this.cloudinaryService = cloudinaryService;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -56,10 +56,9 @@ public class SupportItemServiceImpl implements SupportItemsService {
     public SupportItemResponse createSupportItem(SupportItemRequest request) {
         log.info("Creating support item: {}", request.getTitle());
 
-        String imageUrl = null;
-        if (request.getImg() != null && !request.getImg().isEmpty()) {
-            imageUrl = cloudinaryService.uploadImage(request.getImg());
-        }
+        String imageUrl = (request.getImg() != null && !request.getImg().isEmpty())
+                ? fileStorageService.storeImage(request.getImg())
+                : null;
 
         SupportItem supportItem = SupportItem.builder()
                 .title(request.getTitle())
@@ -76,23 +75,24 @@ public class SupportItemServiceImpl implements SupportItemsService {
     @Override
     public SupportItemResponse updateSupportItem(Long id, SupportItemRequest request) {
         log.info("Updating support item with id: {}", id);
-
-        SupportItem existing = supportItemRepository.findById(id)
+        SupportItem existingSupportItem = supportItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ResourceNotFoundException));
 
-        String imageUrl = existing.getImg(); // mặc định giữ nguyên ảnh cũ
-        if (request.getImg() != null && !request.getImg().isEmpty()) {
-            imageUrl = cloudinaryService.uploadImage(request.getImg());
-        }
+        String imageUrl = (request.getImg() != null && !request.getImg().isEmpty())
+                ? fileStorageService.storeImage(request.getImg())
+                : existingSupportItem.getImg();
 
-        existing.setTitle(request.getTitle());
-        existing.setImg(imageUrl);
-        existing.setHours(request.getHours());
-        existing.setContact(request.getContact());
-        existing.setLink(request.getLink());
-        existing.setBgColor(request.getBgColor());
+        SupportItem updatedSupportItem = SupportItem.builder()
+                .id(existingSupportItem.getId())  // Giữ nguyên ID
+                .title(request.getTitle())
+                .img(imageUrl)
+                .hours(request.getHours())
+                .contact(request.getContact())
+                .link(request.getLink())
+                .bgColor(request.getBgColor())
+                .build();
 
-        return supportItemMapper.toResponse(supportItemRepository.save(existing));
+        return supportItemMapper.toResponse(supportItemRepository.save(updatedSupportItem));
     }
 
     @Override
@@ -100,6 +100,7 @@ public class SupportItemServiceImpl implements SupportItemsService {
         log.info("Deleting support item with id: {}", id);
         SupportItem supportItem = supportItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ResourceNotFoundException));
+
         supportItemRepository.delete(supportItem);
     }
 }
