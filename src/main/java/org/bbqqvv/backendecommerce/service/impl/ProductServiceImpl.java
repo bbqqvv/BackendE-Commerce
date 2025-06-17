@@ -10,9 +10,14 @@ import org.bbqqvv.backendecommerce.entity.*;
 import org.bbqqvv.backendecommerce.exception.AppException;
 import org.bbqqvv.backendecommerce.exception.ErrorCode;
 import org.bbqqvv.backendecommerce.mapper.ProductMapper;
-import org.bbqqvv.backendecommerce.repository.*;
+import org.bbqqvv.backendecommerce.mapper.SizeProductMapper;
+import org.bbqqvv.backendecommerce.mapper.VariantMapper;
+import org.bbqqvv.backendecommerce.repository.CategoryRepository;
+import org.bbqqvv.backendecommerce.repository.ProductRepository;
+import org.bbqqvv.backendecommerce.repository.SizeProductRepository;
+import org.bbqqvv.backendecommerce.repository.TagRepository;
 import org.bbqqvv.backendecommerce.service.ProductService;
-import org.bbqqvv.backendecommerce.service.img.CloudinaryService;
+import org.bbqqvv.backendecommerce.service.img.FileStorageService;
 import org.bbqqvv.backendecommerce.util.SlugUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,7 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,19 +42,19 @@ public class ProductServiceImpl implements ProductService {
     CategoryRepository categoryRepository;
     SizeProductRepository sizeProductRepository;
     ProductMapper productMapper;
-    CloudinaryService cloudinaryService;
+    FileStorageService fileStorageService;
     TagRepository tagRepository;
-
     public ProductServiceImpl(ProductRepository productRepository,
                               CategoryRepository categoryRepository,
                               ProductMapper productMapper,
-                              CloudinaryService cloudinaryService,
+                              VariantMapper variantMapper,
+                              FileStorageService fileStorageService,
                               SizeProductRepository sizeProductRepository,
-                              TagRepository tagRepository) {
+                              SizeProductMapper sizeProductMapper, TagRepository tagRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.productMapper = productMapper;
-        this.cloudinaryService = cloudinaryService;
+        this.fileStorageService = fileStorageService;
         this.sizeProductRepository = sizeProductRepository;
         this.tagRepository = tagRepository;
     }
@@ -60,7 +68,10 @@ public class ProductServiceImpl implements ProductService {
         Category category = getCategoryById(productRequest.getCategoryId());
         Product product = createOrUpdateProductEntity(productRequest, category);
 
-        product.setSlug(generateUniqueSlug(productRequest.getName()));
+        // Generate unique slug
+        String slug = generateUniqueSlug(productRequest.getName());
+        product.setSlug(slug);
+
         Product savedProduct = productRepository.save(product);
         return toFullProductResponse(savedProduct);
     }
@@ -72,6 +83,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
     }
 
+
     @Override
     public PageResponse<ProductResponse> getAllProducts(Pageable pageable) {
         Page<Product> productPage = productRepository.findAll(pageable);
@@ -81,7 +93,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageResponse<ProductResponse> findProductByCategorySlug(String slug, Pageable pageable) {
         Category category = categoryRepository.findBySlug(slug);
-        if (category == null) throw new AppException(ErrorCode.CATEGORY_NOT_FOUND);
+        if (category == null) {
+            throw new AppException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
         Page<Product> productPage = productRepository.findProductByCategory(category, pageable);
         return toPageResponse(productPage);
     }
@@ -104,8 +118,10 @@ public class ProductServiceImpl implements ProductService {
         Product product = createOrUpdateProductEntity(productRequest, category);
         product.setId(id);
 
+        // Update slug if the name has changed
         if (!existingProduct.getName().equals(productRequest.getName())) {
-            product.setSlug(generateUniqueSlug(productRequest.getName()));
+            String uniqueSlug = generateUniqueSlug(productRequest.getName());
+            product.setSlug(uniqueSlug);
         } else {
             product.setSlug(existingProduct.getSlug());
         }
@@ -126,7 +142,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageResponse<ProductResponse> searchProductsByName(String name, Pageable pageable) {
         Page<Product> products = productRepository.findByNameContainingIgnoreCase(name, pageable);
-        List<ProductResponse> responses = products.getContent().stream()
+        List<ProductResponse> productResponses = products.stream()
                 .map(this::toFullProductResponse)
                 .collect(Collectors.toList());
 
@@ -135,65 +151,73 @@ public class ProductServiceImpl implements ProductService {
                 .totalPages(products.getTotalPages())
                 .pageSize(products.getSize())
                 .totalElements(products.getTotalElements())
-                .items(responses)
+                .items(productResponses)
                 .build();
     }
 
     @Override
     public PageResponse<ProductResponse> getFeaturedProducts(Pageable pageable) {
-        Page<Product> featured = productRepository.findByFeaturedTrue(pageable);
-        return toPageResponse(featured);
+        Page<Product> featuredProducts = productRepository.findByFeaturedTrue(pageable);
+        return toPageResponse(featuredProducts);
     }
+
 
     private Category getCategoryById(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
-    private Product createOrUpdateProductEntity(ProductRequest req, Category category) {
-        Product product = productMapper.toProduct(req);
+    private Product createOrUpdateProductEntity(ProductRequest productRequest, Category category) {
+        Product product = productMapper.toProduct(productRequest);
         product.setCategory(category);
 
-        handleImageUrls(product, req);
+        // ✅ Xử lý hình ảnh
+        handleImageUrls(product, productRequest);
 
-        if (req.getTags() != null) {
-            Set<Tag> tags = req.getTags().stream()
-                    .map(name -> tagRepository.findByName(name)
-                            .orElseGet(() -> tagRepository.save(new Tag(name))))
+        // ✅ Xử lý tags từ productRequest
+        if (productRequest.getTags() != null) {
+            Set<Tag> tags = productRequest.getTags().stream()
+                    .map(tagName -> tagRepository.findByName(tagName)
+                            .orElseGet(() -> tagRepository.save(new Tag(tagName)))) // Tạo nếu chưa có
                     .collect(Collectors.toSet());
+
             product.setTags(tags);
         }
 
-        if (req.getVariants() != null) {
-            List<ProductVariant> variants = req.getVariants().stream().map(variantRequest -> {
+        // ✅ Xử lý variants và size
+        if (productRequest.getVariants() != null) {
+            List<ProductVariant> variants = productRequest.getVariants().stream().map(variantRequest -> {
                 ProductVariant variant = new ProductVariant();
                 variant.setColor(variantRequest.getColor());
                 variant.setProduct(product);
 
+                // Upload hình ảnh cho variant
                 Optional.ofNullable(variantRequest.getImageUrl())
-                        .map(cloudinaryService::uploadImage)
+                        .map(fileStorageService::storeImage)
                         .ifPresent(variant::setImageUrl);
 
+                // Xử lý kích thước cho từng variant
                 List<SizeProductVariant> sizeVariants = Optional.ofNullable(variantRequest.getSizes())
                         .orElse(Collections.emptyList())
                         .stream()
                         .map(sizeRequest -> {
-                            SizeProduct size = sizeProductRepository.findBySizeName(sizeRequest.getSizeName())
+                            SizeProduct sizeProduct = sizeProductRepository.findBySizeName(sizeRequest.getSizeName())
                                     .orElseGet(() -> {
-                                        SizeProduct s = new SizeProduct();
-                                        s.setSizeName(sizeRequest.getSizeName());
-                                        s.setPrice(sizeRequest.getPrice());
-                                        s.setPriceAfterDiscount(calculatePriceAfterDiscount(
-                                                sizeRequest.getPrice(), req.getSalePercentage()));
-                                        return sizeProductRepository.save(s);
+                                        SizeProduct newSize = new SizeProduct();
+                                        newSize.setSizeName(sizeRequest.getSizeName());
+                                        newSize.setPrice(sizeRequest.getPrice());
+                                        newSize.setPriceAfterDiscount(
+                                                calculatePriceAfterDiscount(sizeRequest.getPrice(), productRequest.getSalePercentage()));
+                                        return sizeProductRepository.save(newSize);
                                     });
 
-                            SizeProductVariant spv = new SizeProductVariant();
-                            spv.setProductVariant(variant);
-                            spv.setSizeProduct(size);
-                            spv.setStock(sizeRequest.getStock());
-                            return spv;
-                        }).collect(Collectors.toList());
+                            SizeProductVariant sizeVariant = new SizeProductVariant();
+                            sizeVariant.setSizeProduct(sizeProduct);
+                            sizeVariant.setProductVariant(variant);
+                            sizeVariant.setStock(sizeRequest.getStock());
+                            return sizeVariant;
+                        })
+                        .collect(Collectors.toList());
 
                 variant.setProductVariantSizes(sizeVariants);
                 return variant;
@@ -205,67 +229,79 @@ public class ProductServiceImpl implements ProductService {
         return product;
     }
 
-    private void handleImageUrls(Product product, ProductRequest req) {
+    private void handleImageUrls(Product product, ProductRequest productRequest) {
         try {
-            Optional.ofNullable(req.getMainImageUrl())
-                    .map(cloudinaryService::uploadImage)
-                    .ifPresent(url -> product.setMainImage(ProductMainImage.builder()
-                            .imageUrl(url).product(product).build()));
+            Optional.ofNullable(productRequest.getMainImageUrl())
+                    .map(fileStorageService::storeImage)
+                    .ifPresent(imageUrl -> product.setMainImage(ProductMainImage.builder()
+                            .imageUrl(imageUrl)
+                            .product(product)
+                            .build()));
 
-            Optional.ofNullable(req.getSecondaryImageUrls())
-                    .filter(list -> !list.isEmpty())
-                    .map(cloudinaryService::uploadImages)
-                    .ifPresent(urls -> product.setSecondaryImages(urls.stream()
-                            .map(url -> ProductSecondaryImage.builder().imageUrl(url).product(product).build())
+            Optional.ofNullable(productRequest.getSecondaryImageUrls())
+                    .filter(urls -> !urls.isEmpty())
+                    .map(fileStorageService::storeImages)
+                    .ifPresent(images -> product.setSecondaryImages(images.stream()
+                            .map(url -> ProductSecondaryImage.builder()
+                                    .imageUrl(url)
+                                    .product(product)
+                                    .build())
                             .collect(Collectors.toList())));
 
-            Optional.ofNullable(req.getDescriptionImageUrls())
-                    .filter(list -> !list.isEmpty())
-                    .map(cloudinaryService::uploadImages)
-                    .ifPresent(urls -> product.setDescriptionImages(urls.stream()
-                            .map(url -> ProductDescriptionImage.builder().imageUrl(url).product(product).build())
+            Optional.ofNullable(productRequest.getDescriptionImageUrls())
+                    .filter(urls -> !urls.isEmpty())
+                    .map(fileStorageService::storeImages)
+                    .ifPresent(images -> product.setDescriptionImages(images.stream()
+                            .map(url -> ProductDescriptionImage.builder()
+                                    .imageUrl(url)
+                                    .product(product)
+                                    .build())
                             .collect(Collectors.toList())));
+
         } catch (Exception e) {
             throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
     }
 
     private String generateUniqueSlug(String name) {
-        String base = SlugUtils.toSlug(name);
-        String slug = base;
-        int count = 1;
+        String baseSlug = SlugUtils.toSlug(name);
+        String slug = baseSlug;
+        int counter = 1;
+
         while (productRepository.existsBySlug(slug)) {
-            slug = base + "-" + count++;
+            slug = String.format("%s-%d", baseSlug, counter++);
         }
+
         return slug;
     }
 
-    private BigDecimal calculatePriceAfterDiscount(BigDecimal price, int percent) {
-        if (price != null && percent > 0) {
-            BigDecimal discount = price.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100));
+
+    private BigDecimal calculatePriceAfterDiscount(BigDecimal price, int salePercentage) {
+        if (price != null && salePercentage > 0) {
+            BigDecimal discount = price.multiply(BigDecimal.valueOf(salePercentage)).divide(BigDecimal.valueOf(100));
             return price.subtract(discount);
         }
         return price;
     }
 
-    private PageResponse<ProductResponse> toPageResponse(Page<Product> page) {
-        List<ProductResponse> items = page.getContent().stream()
+    private PageResponse<ProductResponse> toPageResponse(Page<Product> productPage) {
+        List<ProductResponse> productResponses = productPage.getContent().stream()
                 .map(this::toFullProductResponse)
                 .collect(Collectors.toList());
 
         return PageResponse.<ProductResponse>builder()
-                .currentPage(page.getNumber())
-                .totalPages(page.getTotalPages())
-                .pageSize(page.getSize())
-                .totalElements(page.getTotalElements())
-                .items(items)
+                .currentPage(productPage.getNumber())
+                .totalPages(productPage.getTotalPages())
+                .pageSize(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .items(productResponses)
                 .build();
     }
 
     private ProductResponse toFullProductResponse(Product product) {
-        ProductResponse res = productMapper.toProductResponse(product);
+        ProductResponse response = productMapper.toProductResponse(product);
         long reviewCount = productRepository.countReviewsByProductId(product.getId());
-        res.setReviewCount((int) reviewCount);
-        return res;
+        response.setReviewCount((int) reviewCount);
+        return response;
     }
 }
