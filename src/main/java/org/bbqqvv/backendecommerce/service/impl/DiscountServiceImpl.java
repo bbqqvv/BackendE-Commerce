@@ -37,7 +37,8 @@ public class DiscountServiceImpl implements DiscountService {
     private final UserRepository userRepository;
     private final DiscountProductRepository discountProductRepository;
     private final DiscountUserRepository discountUserRepository;
-private final CartService cartService;
+    private final CartService cartService;
+
     public DiscountServiceImpl(DiscountRepository discountRepository,
                                DiscountMapper discountMapper, DiscountPreviewMapper discountPreviewMapper,
                                ProductRepository productRepository,
@@ -115,7 +116,6 @@ private final CartService cartService;
     }
 
 
-
     /**
      * Lấy danh sách người dùng từ database
      */
@@ -152,8 +152,10 @@ private final CartService cartService;
 
         if (code.isEmpty()) throw new AppException(ErrorCode.INVALID_DISCOUNT_CODE);
         if (discountAmount.compareTo(BigDecimal.ZERO) <= 0) throw new AppException(ErrorCode.INVALID_DISCOUNT_AMOUNT);
-        if (maxDiscountAmount.compareTo(BigDecimal.ZERO) < 0) throw new AppException(ErrorCode.INVALID_MAX_DISCOUNT_AMOUNT);
-        if (discountAmount.compareTo(maxDiscountAmount) > 0) throw new AppException(ErrorCode.INVALID_DISCOUNT_AMOUNT_LIMIT);
+        if (maxDiscountAmount.compareTo(BigDecimal.ZERO) < 0)
+            throw new AppException(ErrorCode.INVALID_MAX_DISCOUNT_AMOUNT);
+        if (discountAmount.compareTo(maxDiscountAmount) > 0)
+            throw new AppException(ErrorCode.INVALID_DISCOUNT_AMOUNT_LIMIT);
         if (request.getDiscountType() == null) throw new AppException(ErrorCode.INVALID_DISCOUNT_TYPE);
         if (minOrderValue.compareTo(BigDecimal.ZERO) < 0) throw new AppException(ErrorCode.INVALID_MIN_ORDER_VALUE);
         if (usageLimit < 1) throw new AppException(ErrorCode.INVALID_USAGE_LIMIT);
@@ -301,32 +303,24 @@ private final CartService cartService;
     }
 
 
-
-
     @Override
     public DiscountPreviewResponse previewDiscount(DiscountPreviewRequest discountPreviewRequest) {
         if (discountPreviewRequest == null || discountPreviewRequest.getDiscountCode() == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
-
-        // 🔥 1️⃣ Tìm mã giảm giá
         Discount discount = discountRepository.findByCode(discountPreviewRequest.getDiscountCode())
                 .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
 
-        // 🔥 2️⃣ Lấy tổng giá trị giỏ hàng
         BigDecimal originalTotalAmount = cartService.getTotalCartAmount(discountPreviewRequest.getCartId());
         if (originalTotalAmount == null) {
             originalTotalAmount = BigDecimal.ZERO;
         }
 
-        // 🔥 3️⃣ Kiểm tra điều kiện áp dụng
         boolean valid = validateDiscount(discount, originalTotalAmount);
 
-        // 🔥 4️⃣ Tính toán số tiền giảm giá
         BigDecimal discountAmount = valid ? calculateDiscountAmount(discount, originalTotalAmount) : BigDecimal.ZERO;
         BigDecimal finalAmount = originalTotalAmount.subtract(discountAmount);
 
-        // 🔥 5️⃣ Tạo phản hồi
         return DiscountPreviewResponse.builder()
                 .discountCode(discount.getCode())
                 .discountType(discount.getDiscountType())
@@ -341,24 +335,19 @@ private final CartService cartService;
 
     @Override
     public void saveDiscount(String discountCode) {
-        // Lấy thông tin người dùng hiện tại
         User currentUser = getAuthenticatedUser();
 
-        // Kiểm tra mã giảm giá có tồn tại không
         Discount discount = discountRepository.findByCode(discountCode)
                 .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
 
-        // Kiểm tra xem user đã lưu mã giảm giá này chưa
         boolean alreadySaved = discountUserRepository.existsByUserIdAndDiscountCode(currentUser.getId(), discountCode);
         if (alreadySaved) {
             throw new AppException(ErrorCode.DISCOUNT_ALREADY_SAVED);
         }
 
-        // Lưu mã giảm giá vào danh sách của user
         DiscountUser discountUser = new DiscountUser(discount, currentUser);
         discountUserRepository.save(discountUser);
 
-        // Tăng số lượt sử dụng của mã giảm giá
         discount.setTimesUsed(discount.getTimesUsed() + 1);
         discountRepository.save(discount);
     }
@@ -369,39 +358,32 @@ private final CartService cartService;
             return BigDecimal.ZERO;
         }
 
-        // Nếu tổng tiền chưa đạt mức tối thiểu để áp dụng mã giảm giá
         if (originalTotalAmount.compareTo(discount.getMinOrderValue()) < 0) {
             return BigDecimal.ZERO;
         }
 
         BigDecimal discountAmount;
 
-        // 🔥 Nếu mã giảm giá là phần trăm (PERCENTAGE)
         if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
             discountAmount = originalTotalAmount
                     .multiply(discount.getDiscountAmount().divide(BigDecimal.valueOf(100))); // Chia 100 để tính %
 
-            // Áp dụng giới hạn tối đa (nếu có)
             if (discount.getMaxDiscountAmount() != null) {
                 discountAmount = discountAmount.min(discount.getMaxDiscountAmount());
             }
         }
-        // 🔥 Nếu mã giảm giá là số tiền cố định (MONEY)
         else {
             discountAmount = discount.getDiscountAmount();
         }
 
-        // Đảm bảo số tiền giảm không vượt quá tổng giá trị giỏ hàng
         return discountAmount.min(originalTotalAmount);
     }
 
     private boolean validateDiscount(Discount discount, BigDecimal originalTotalAmount) {
-        // Kiểm tra ngày hết hạn
         if (discount.getExpiryDate().isBefore(LocalDateTime.now())) {
             return false;
         }
 
-        // Kiểm tra giá trị đơn hàng tối thiểu
         if (originalTotalAmount.compareTo(discount.getMinOrderValue()) < 0) {
             return false;
         }
@@ -418,7 +400,6 @@ private final CartService cartService;
             discountAmount = discount.getDiscountAmount();
         }
 
-        // Giới hạn mức giảm tối đa
         if (discount.getMaxDiscountAmount() != null) {
             discountAmount = discountAmount.min(discount.getMaxDiscountAmount());
         }
@@ -426,13 +407,11 @@ private final CartService cartService;
         return originalTotalAmount.subtract(discountAmount);
     }
 
-    // 🔹 Tìm discount theo ID (dùng chung)
     private Discount findDiscountById(Long id) {
         return discountRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
     }
 
-    // 🔹 Thêm danh sách sản phẩm vào bảng trung gian
     private void addProductsToDiscount(Discount discount, List<Long> productIds) {
         if (productIds == null || productIds.isEmpty()) return;
 
@@ -447,65 +426,55 @@ private final CartService cartService;
                 })
                 .collect(Collectors.toList());
 
-        // ✅ Đảm bảo các entity được quản lý bởi Hibernate trước khi lưu
         discountProductRepository.saveAll(discountProducts);
     }
 
 
     private void updateDiscountProducts(Discount discount, List<Long> productIds) {
-        if (productIds == null) productIds = List.of(); // Đảm bảo không null
+        if (productIds == null) productIds = List.of();
 
-        // Lấy danh sách sản phẩm hiện tại từ DB
         Set<Long> existingProductIds = discountProductRepository.findByDiscountId(discount.getId())
                 .stream()
                 .map(dp -> dp.getProduct().getId())
-                .collect(Collectors.toSet()); // Chuyển thành Set để tìm kiếm nhanh hơn
+                .collect(Collectors.toSet());
 
-        Set<Long> newProductIds = new HashSet<>(productIds); // Chuyển danh sách mới thành Set
+        Set<Long> newProductIds = new HashSet<>(productIds);
 
-        // Xác định sản phẩm cần xóa
         Set<Long> productsToRemove = new HashSet<>(existingProductIds);
-        productsToRemove.removeAll(newProductIds); // Giữ lại những sản phẩm không có trong danh sách mới
+        productsToRemove.removeAll(newProductIds);
 
-        // Xác định sản phẩm cần thêm mới
         Set<Long> productsToAdd = new HashSet<>(newProductIds);
-        productsToAdd.removeAll(existingProductIds); // Giữ lại những sản phẩm mới chưa có trong danh sách cũ
+        productsToAdd.removeAll(existingProductIds);
 
-        // Xóa sản phẩm không còn trong danh sách mới
         if (!productsToRemove.isEmpty()) {
             discountProductRepository.deleteByDiscountIdAndProductIds(discount.getId(), productsToRemove);
         }
-        // Thêm sản phẩm mới
         addProductsToDiscount(discount, new ArrayList<>(productsToAdd));
     }
-    // 🔹 Cập nhật danh sách người dùng trong bảng trung gian
-    private void updateDiscountUsers(Discount discount, List<Long> userIds) {
-        if (userIds == null) userIds = List.of(); // Đảm bảo không null
 
-        // Lấy danh sách người dùng hiện tại từ DB
+    private void updateDiscountUsers(Discount discount, List<Long> userIds) {
+        if (userIds == null) userIds = List.of();
+
         Set<Long> existingUserIds = discountUserRepository.findByDiscountId(discount.getId())
                 .stream()
                 .map(du -> du.getUser().getId())
-                .collect(Collectors.toSet()); // Chuyển thành Set để tìm kiếm nhanh hơn
+                .collect(Collectors.toSet());
 
-        Set<Long> newUserIds = new HashSet<>(userIds); // Chuyển danh sách mới thành Set
+        Set<Long> newUserIds = new HashSet<>(userIds);
 
-        // Xác định user cần xóa
         Set<Long> usersToRemove = new HashSet<>(existingUserIds);
-        usersToRemove.removeAll(newUserIds); // Giữ lại những user không có trong danh sách mới
+        usersToRemove.removeAll(newUserIds);
 
-        // Xác định user cần thêm mới
         Set<Long> usersToAdd = new HashSet<>(newUserIds);
-        usersToAdd.removeAll(existingUserIds); // Giữ lại những user mới chưa có trong danh sách cũ
+        usersToAdd.removeAll(existingUserIds);
 
-        // Xóa user không còn trong danh sách mới
         if (!usersToRemove.isEmpty()) {
             discountUserRepository.deleteByDiscountIdAndUserIds(discount.getId(), usersToRemove);
         }
 
-        // Thêm user mới
         addUsersToDiscount(discount, new ArrayList<>(usersToAdd));
     }
+
     private void addUsersToDiscount(Discount discount, List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) return;
         List<User> users = userRepository.findAllById(userIds);

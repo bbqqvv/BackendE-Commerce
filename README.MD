@@ -59,7 +59,7 @@ docker-compose up -d
 
 ## 📘 API Documentation
 
-* 🔗 Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+* 🔗 Swagger UI: [https://roway-bb6400b1f6e1.herokuapp.com/swagger-ui.html](https://roway-bb6400b1f6e1.herokuapp.com/swagger-ui.html)
 * 🧾 Detailed documentation: [DeepWiki Order Management](https://deepwiki.com/bbqqvv/Backend-E-Commerce/5-order-management)
 * 📥 Postman Collection: *(Add link if available)*
 * 📄 API guide PDF: *(Optional attachment)*

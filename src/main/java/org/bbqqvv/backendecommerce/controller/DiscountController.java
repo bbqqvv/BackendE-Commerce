@@ -35,7 +35,7 @@ public class DiscountController {
     }
 
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<DiscountResponse> updateDiscount(@PathVariable Long id, @RequestBody @Valid DiscountRequest request) {
         DiscountResponse discountResponse = discountService.updateDiscount(id, request);

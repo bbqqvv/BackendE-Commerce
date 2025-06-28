@@ -1,11 +1,9 @@
 package org.bbqqvv.backendecommerce.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bbqqvv.backendecommerce.dto.ApiResponse;
 import org.bbqqvv.backendecommerce.dto.PageResponse;
 import org.bbqqvv.backendecommerce.dto.request.ProductRequest;
-import org.bbqqvv.backendecommerce.dto.request.ViewedProductRequest;
 import org.bbqqvv.backendecommerce.dto.response.ProductResponse;
 import org.bbqqvv.backendecommerce.service.ProductService;
 import org.bbqqvv.backendecommerce.service.RecentlyViewedProductService;
@@ -33,6 +31,17 @@ public class ProductController {
                 .success(true)
                 .message("Product created successfully")
                 .data(product)
+                .build();
+    }
+
+    // Lấy danh sách tất cả sản phẩm với phân trang
+    @GetMapping
+    public ApiResponse<PageResponse<ProductResponse>> getAllProducts(@PageableDefault(page = 0, size = 10) Pageable pageable) {
+        PageResponse<ProductResponse> productPage = productService.getAllProducts(pageable);
+        return ApiResponse.<PageResponse<ProductResponse>>builder()
+                .success(true)
+                .message("Product list retrieved successfully")
+                .data(productPage)
                 .build();
     }
     // Lấy sản phẩm nổi bật (featured) với phân trang
@@ -69,16 +78,7 @@ public class ProductController {
                 .build();
     }
 
-    // Lấy danh sách tất cả sản phẩm với phân trang
-    @GetMapping
-    public ApiResponse<PageResponse<ProductResponse>> getAllProducts(@PageableDefault(page = 0, size = 10) Pageable pageable) {
-        PageResponse<ProductResponse> productPage = productService.getAllProducts(pageable);
-        return ApiResponse.<PageResponse<ProductResponse>>builder()
-                .success(true)
-                .message("Product list retrieved successfully")
-                .data(productPage)
-                .build();
-    }
+
 
     // Lấy sản phẩm theo danh mục với phân trang
     @GetMapping("/find-by-category-slug/{slug}")
@@ -94,7 +94,7 @@ public class ProductController {
     }
 
     // Cập nhật thông tin sản phẩm
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<ProductResponse> updateProduct(@PathVariable Long id, @ModelAttribute ProductRequest productRequest) {
         ProductResponse updatedProduct = productService.updateProduct(id, productRequest);
@@ -133,9 +133,9 @@ public class ProductController {
     /**
      * Đánh dấu sản phẩm đã xem
      */
-    @PostMapping("/mark")
-    public ApiResponse<String> markProductAsViewed(@RequestBody @Valid ViewedProductRequest request) {
-        recentlyViewedProductService.markProductAsViewed(request.getProductId());
+    @PostMapping("/{productId}/mark")
+    public ApiResponse<String> markProductAsViewed(@PathVariable Long productId) {
+        recentlyViewedProductService.markProductAsViewed(productId);
         return ApiResponse.<String>builder()
                 .success(true)
                 .data("Product marked as viewed")
@@ -156,7 +156,6 @@ public class ProductController {
                 .message("Fetched successfully")
                 .build();
     }
-
     @PostMapping("/viewed-sync")
     public ApiResponse<String> syncViewedProducts(@RequestBody List<Long> productIds) {
         recentlyViewedProductService.syncViewedProducts(productIds);
@@ -166,7 +165,4 @@ public class ProductController {
                 .message("Local viewed products synced")
                 .build();
     }
-
-
-
 }

@@ -22,6 +22,6 @@ public class DiscountRequest {
     private LocalDateTime startDate;
     private LocalDateTime expiryDate;
     private boolean active;
-    private List<Long> applicableProducts; // Danh sách ID sản phẩm được áp dụng
-    private List<Long> applicableUsers; // Danh sách ID người dùng được áp dụng
+    private List<Long> applicableProducts;
+    private List<Long> applicableUsers;
 }
